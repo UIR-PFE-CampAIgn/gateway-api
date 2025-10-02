@@ -10,8 +10,10 @@ export class WhatsappWebhookController {
   @Post()
   @UseGuards(TwilioSignatureGuard)
   @HttpCode(200)
-  receive(@Body() body: TwilioWhatsAppWebhookDto): { status: 'ok' } {
-    this.service.processIncoming(body);
+  async receive(
+    @Body() body: TwilioWhatsAppWebhookDto,
+  ): Promise<{ status: 'ok' }> {
+    await this.service.processIncoming(body);
     return { status: 'ok' };
   }
 }

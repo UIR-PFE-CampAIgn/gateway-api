@@ -17,9 +17,10 @@ export function normalizeTwilioWhatsAppPayload(
 
   const media: Array<{ contentType: string; url: string }> = [];
   for (let i = 0; i < numMedia; i += 1) {
-    const contentType = (payload as any)[`MediaContentType${i}`];
-    const url = (payload as any)[`MediaUrl${i}`];
-    if (url) media.push({ contentType: String(contentType ?? ''), url: String(url) });
+    const contentType = payload[`MediaContentType${i}`];
+    const url = payload[`MediaUrl${i}`];
+    if (url)
+      media.push({ contentType: String(contentType ?? ''), url: String(url) });
   }
 
   const message: NormalizedInboundMessage = {
@@ -38,9 +39,8 @@ export function normalizeTwilioWhatsAppPayload(
     numMedia,
     media,
     receivedAt: new Date().toISOString(),
-    raw: payload as any,
+    raw: payload,
   };
 
   return message;
 }
-
