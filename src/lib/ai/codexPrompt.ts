@@ -20,6 +20,7 @@ Mission → Help Moroccan SMEs chat on WhatsApp, run campaigns, qualify leads an
 3. **campaign-ml-service**  (FastAPI)  
     • GET /predict_intent (TF-IDF + SVM)  
     • GET /predict_score (LogReg / XGBoost)  
+    • POST /rag_answer (RAG answer)
     • POST /train → retrain; stores models in s3://models/{name}/{ver}
 
 4. **campaign-analytics-job**  (Python ETL)  
@@ -34,7 +35,7 @@ Mission → Help Moroccan SMEs chat on WhatsApp, run campaigns, qualify leads an
 # 🔧 Tech stack
  • Next.js 13 (App Router) + Supabase Auth  
  • NestJS (REST) + MongoDB + Redis  
- • FastAPI + scikit-learn / HuggingFace + MinIO  
+ • FastAPI + scikit-learn / HuggingFace + MinIO + OpenAI 
  • DuckDB, Parquet, optional ClickHouse  
  • Terraform, GitHub Actions, Docker-compose, Caddy HTTPS  
  • LLMs via Ollama (Llama-3-8B or Mixtral-8x7B) + LangChain

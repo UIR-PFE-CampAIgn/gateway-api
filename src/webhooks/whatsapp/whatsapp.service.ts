@@ -8,6 +8,7 @@ import { MessagesRepository } from '../../database/repositories/message.reposito
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { badRequest, internal, notFound } from '../../common/http-errors';
+import { AiResponderService } from './ai-responder.service';
 
 @Injectable()
 export class WhatsappWebhookService {
@@ -25,6 +26,7 @@ export class WhatsappWebhookService {
     private readonly chatsRepo: ChatsRepository,
     private readonly messagesRepo: MessagesRepository,
     @InjectConnection() private readonly connection: Connection,
+    private readonly aiResponder: AiResponderService,
   ) {}
 
   async processIncoming(
@@ -216,6 +218,23 @@ export class WhatsappWebhookService {
       true,
       session,
     );
+
+    // Non-blocking AI auto-reply
+    try {
+      const fromNumber = (bsm as any).page_id || normalized.to;
+      this.aiResponder.scheduleAutoReply(
+        normalized,
+        (chat as any)._id,
+        this.stripWhatsAppPrefix(fromNumber),
+      );
+    } catch (e) {
+      this.logger.warn(`Failed to schedule AI reply: ${(e as Error).message}`);
+    }
+  }
+
+  private stripWhatsAppPrefix(v?: string): string {
+    if (!v) return '';
+    return v.replace(/^whatsapp:/i, '');
   }
 
   private resolveProvider(body: TwilioWhatsAppWebhookDto): string {
