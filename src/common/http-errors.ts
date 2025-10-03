@@ -32,8 +32,11 @@ export const conflict = (message: string, details?: Details) =>
   new ConflictException(payload(message, 'Conflict', details));
 
 export const unprocessable = (message: string, details?: Details) =>
-  new UnprocessableEntityException(payload(message, 'Unprocessable Entity', details));
+  new UnprocessableEntityException(
+    payload(message, 'Unprocessable Entity', details),
+  );
 
 export const internal = (message: string, details?: Details) =>
-  new InternalServerErrorException(payload(message, 'Internal Server Error', details));
-
+  new InternalServerErrorException(
+    payload(message, 'Internal Server Error', details),
+  );

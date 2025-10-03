@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { validateRequest } from 'twilio/lib/webhooks/webhooks';
 import { internal, unauthorized } from '../../common/http-errors';
@@ -25,7 +30,9 @@ export class TwilioSignatureGuard implements CanActivate {
 
     if (!authToken) {
       this.logger.error('TWILIO_AUTH_TOKEN not set; cannot verify signature.');
-      throw internal('Signature enforcement enabled but TWILIO_AUTH_TOKEN is not set');
+      throw internal(
+        'Signature enforcement enabled but TWILIO_AUTH_TOKEN is not set',
+      );
     }
     if (!signature) {
       this.logger.warn('Missing X-Twilio-Signature header');

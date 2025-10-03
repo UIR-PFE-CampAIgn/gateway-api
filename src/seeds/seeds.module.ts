@@ -13,4 +13,3 @@ import { SeedsService } from './seeds.service';
   providers: [SeedsService],
 })
 export class SeedsModule {}
-
