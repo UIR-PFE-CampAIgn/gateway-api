@@ -5,6 +5,7 @@ import { RouterModule } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { WhatsappWebhookModule } from './webhooks/whatsapp/whatsapp.module';
+import { TemplatesModule } from './webhooks/templates/templates.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { WhatsappWebhookModule } from './webhooks/whatsapp/whatsapp.module';
       { path: 'webhooks/whatsapp', module: WhatsappWebhookModule },
     ]),
     WhatsappWebhookModule,
+    TemplatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

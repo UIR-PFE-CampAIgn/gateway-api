@@ -35,7 +35,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     // Unknown error
-    this.logger.error('Unhandled error', (exception as any)?.stack || String(exception));
+    this.logger.error(
+      'Unhandled error',
+      (exception as any)?.stack || String(exception),
+    );
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: 500,
       error: 'Internal Server Error',
@@ -45,4 +48,3 @@ export class HttpExceptionFilter implements ExceptionFilter {
     });
   }
 }
-
