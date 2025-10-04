@@ -5,6 +5,7 @@ import { WhatsappWebhookService } from './whatsapp.service';
 import { TwilioSignatureGuard } from './twilio.guard';
 import { TwilioSenderService } from './twilio.sender';
 import { AiResponderService } from './ai-responder.service';
+import { MlClientService } from '../../clients/ml/ml-client.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -14,6 +15,7 @@ import { AiResponderService } from './ai-responder.service';
     TwilioSignatureGuard,
     TwilioSenderService,
     AiResponderService,
+    MlClientService,
   ],
 })
 export class WhatsappWebhookModule {}

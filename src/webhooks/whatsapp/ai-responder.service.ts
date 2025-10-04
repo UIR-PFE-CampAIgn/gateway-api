@@ -3,16 +3,26 @@ import { NormalizedInboundMessage } from './types';
 import { MessagesRepository } from '../../database/repositories/message.repository';
 import { ChatsRepository } from '../../database/repositories/chat.repository';
 import { TwilioSenderService } from './twilio.sender';
+import { ConfigService } from '@nestjs/config';
+import { MlClientService } from '../../clients/ml/ml-client.service';
 
 @Injectable()
 export class AiResponderService {
   private readonly logger = new Logger(AiResponderService.name);
+  private readonly isMLServiceMocked: boolean;
 
   constructor(
     private readonly messagesRepo: MessagesRepository,
     private readonly chatsRepo: ChatsRepository,
     private readonly twilioSender: TwilioSenderService,
-  ) {}
+    private readonly config: ConfigService,
+    private readonly mlClient: MlClientService,
+  ) {
+    this.isMLServiceMocked = !(
+      this.config.get<string>('MOCK_ML_SERVICE') === 'false'
+    );
+    if (this.isMLServiceMocked) this.logger.log('ML service mocked');
+  }
 
   scheduleAutoReply(
     n: NormalizedInboundMessage,
@@ -32,66 +42,51 @@ export class AiResponderService {
     chatId: string,
     fromNumber: string,
   ): Promise<void> {
-    const baseUrl =
-      process.env.ML_SERVICE_URL || process.env.CAMPAIGN_ML_SERVICE_URL;
-    if (!baseUrl) {
-      this.logger.warn('ML service URL not set; skipping auto-reply');
+    if (this.isMLServiceMocked) {
+      this.logger.log('ML service mocked; skipping auto-reply');
       return;
     }
 
-    let answer = '';
-    let model: string | undefined;
-    let confidence: number | undefined;
     try {
-      const res = await fetch(`${baseUrl.replace(/\/$/, '')}/chat/answer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: n.body || '',
-          provider: n.provider,
-          channel: n.channel,
-          from: n.from,
-          to: n.to,
-          context: { chat_id: chatId },
-        }),
+      if (!this.mlClient.isEnabled()) {
+        throw new Error('ML client disabled');
+      }
+      const resp = await this.mlClient.answerChat({
+        message: n.body || '',
+        provider: n.provider,
+        channel: n.channel,
+        from: n.from,
+        to: n.to,
+        context: { chat_id: chatId },
       });
-      if (!res.ok) throw new Error(`ML responded ${res.status}`);
-      const data: any = await res.json();
-      answer = String(data?.answer ?? '');
-      model = data?.model ? String(data.model) : undefined;
-      const conf = Number(data?.confidence);
-      confidence = Number.isFinite(conf) ? conf : undefined;
+      if (!resp.answer) {
+        throw new Error('Empty ML answer');
+      }
+
+      // Persist outbound AI message
+      const msg = await this.messagesRepo.create({
+        chat_id: chatId,
+        direction: 'outbound',
+        msg_type: 'text',
+        text: resp.answer,
+        payload: { ai: true, model: resp.model },
+        provider_message_id: undefined,
+        ai_reply: true,
+        ai_model: resp.model,
+        ai_confidence: resp.confidence,
+      } as any);
+      await this.chatsRepo.incrementMessageCount(chatId, false);
+
+      // Send via Twilio (from our WhatsApp number to the user)
+      const from = fromNumber; // should be E.164 like +1415...
+      const to = n.from.phone; // E.164 lead phone
+      await this.twilioSender.sendWhatsAppMessage(from, to, resp.answer);
+
+      this.logger.log(
+        `AI reply sent: msg_id=${(msg as any)._id} chat_id=${chatId}`,
+      );
     } catch (e) {
-      this.logger.warn(`ML service call failed: ${(e as Error).message}`);
-      return; // Do not send anything if ML fails; could fallback later
+      this.logger.warn(`Auto-reply skipped: ${(e as Error).message}`);
     }
-
-    if (!answer) {
-      this.logger.warn('ML returned empty answer; skipping send');
-      return;
-    }
-
-    // Persist outbound AI message
-    const msg = await this.messagesRepo.create({
-      chat_id: chatId,
-      direction: 'outbound',
-      msg_type: 'text',
-      text: answer,
-      payload: { ai: true, model },
-      provider_message_id: undefined,
-      ai_reply: true,
-      ai_model: model,
-      ai_confidence: confidence,
-    } as any);
-    await this.chatsRepo.incrementMessageCount(chatId, false);
-
-    // Send via Twilio (from our WhatsApp number to the user)
-    const from = fromNumber; // should be E.164 like +1415...
-    const to = n.from.phone; // E.164 lead phone
-    await this.twilioSender.sendWhatsAppMessage(from, to, answer);
-
-    this.logger.log(
-      `AI reply sent: msg_id=${(msg as any)._id} chat_id=${chatId}`,
-    );
   }
 }
