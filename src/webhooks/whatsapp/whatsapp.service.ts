@@ -9,7 +9,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { badRequest, internal, notFound } from '../../common/http-errors';
 import { AiResponderService } from './ai-responder.service';
-
+import { Twilio } from 'twilio';
 @Injectable()
 export class WhatsappWebhookService {
   private readonly logger = new Logger(WhatsappWebhookService.name);
@@ -19,6 +19,7 @@ export class WhatsappWebhookService {
       (process.env.WEBHOOK_STRICT_ERRORS || 'false').toLowerCase() === 'true'
     );
   }
+  private readonly twilioClient: Twilio;
 
   constructor(
     private readonly leadsRepo: LeadsRepository,
@@ -27,7 +28,12 @@ export class WhatsappWebhookService {
     private readonly messagesRepo: MessagesRepository,
     @InjectConnection() private readonly connection: Connection,
     private readonly aiResponder: AiResponderService,
-  ) {}
+  ) {
+    this.twilioClient = new Twilio(
+      process.env.TWILIO_SID,
+      process.env.TWILIO_AUTH_TOKEN,
+    );
+  }
 
   async processIncoming(
     body: TwilioWhatsAppWebhookDto,
@@ -275,5 +281,25 @@ export class WhatsappWebhookService {
       return 'document';
     }
     return 'text';
+  }
+  async sendMessage(payload: { to: string; message: string }) {
+    try {
+      const { to, message } = payload;
+      await this.twilioClient.messages.create({
+        from: `whatsapp:${process.env.WHATSAPP_NUMBER}`, // @TODO should be replaced by Buisness's phone_number
+        to: `whatsapp:+212773823618`, // @TODO should be replaced by lead's phone_number
+        body: message,
+      });
+
+      // If you don't have Twilio yet, just log for now
+      this.logger.log(`Sending WhatsApp message to ${to}: ${message}`);
+      return { sid: 'mock-sid', to, message }; // mock response for testing
+    } catch (error) {
+      this.logger.error(
+        `Failed to send WhatsApp message to ${payload.to}`,
+        error,
+      );
+      throw error;
+    }
   }
 }

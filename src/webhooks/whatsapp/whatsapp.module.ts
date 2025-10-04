@@ -17,5 +17,6 @@ import { MlClientService } from '../../clients/ml/ml-client.service';
     AiResponderService,
     MlClientService,
   ],
+  exports: [WhatsappWebhookService],
 })
 export class WhatsappWebhookModule {}

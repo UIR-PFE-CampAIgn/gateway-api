@@ -12,7 +12,12 @@ import { ChatsRepository } from './repositories/chat.repository';
 import { LeadsRepository } from './repositories/lead.repository';
 import { MessagesRepository } from './repositories/message.repository';
 import { UsersRepository } from './repositories/user.repository';
-
+import { CampaignSchema } from './schemas/campaign.schema';
+import { CampaignRepository } from './repositories/campaign.repository';
+import { CampaignLogSchema } from './schemas/campaign-log.schema';
+import { CampaignLogRepository } from './repositories/campaign-log.repository';
+import { MessageTemplateSchema } from './schemas/message-template.schema';
+import { MessageTemplateRepository } from './repositories/message-template.repository';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -22,6 +27,9 @@ import { UsersRepository } from './repositories/user.repository';
       { name: 'Chat', schema: ChatSchema },
       { name: 'Lead', schema: LeadSchema },
       { name: 'Message', schema: MessageSchema },
+      { name: 'Campaign', schema: CampaignSchema },
+      { name: 'CampaignLog', schema: CampaignLogSchema },
+      { name: 'MessageTemplate', schema: MessageTemplateSchema },
     ]),
   ],
   providers: [
@@ -31,6 +39,9 @@ import { UsersRepository } from './repositories/user.repository';
     ChatsRepository,
     LeadsRepository,
     MessagesRepository,
+    CampaignLogRepository,
+    CampaignRepository,
+    MessageTemplateRepository,
   ],
   exports: [
     MongooseModule,
@@ -40,6 +51,9 @@ import { UsersRepository } from './repositories/user.repository';
     ChatsRepository,
     LeadsRepository,
     MessagesRepository,
+    CampaignLogRepository,
+    CampaignRepository,
+    MessageTemplateRepository,
   ],
 })
 export class DatabaseModule {}

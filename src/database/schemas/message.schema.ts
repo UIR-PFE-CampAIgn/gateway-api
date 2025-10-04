@@ -14,17 +14,18 @@ export type MessageType =
   | 'button';
 
 export interface Message {
-  _id: string; // UUID
-  chat_id: string; // FK to chats
+  _id: string;
+  chat_id: string;
   direction: MessageDirection;
-  msg_type: MessageType; // default 'text'
+  msg_type: MessageType;
   text?: string;
   payload?: Record<string, any>;
   provider_message_id?: string;
-  ai_reply: boolean; // default false
+  ai_reply: boolean;
   ai_model?: string;
   ai_confidence?: number;
   created_at?: Date;
+  campaign_id?: string;
 }
 
 export type MessageDocument = HydratedDocument<Message>;
@@ -56,6 +57,7 @@ export const MessageSchema = new Schema<Message>(
     ai_reply: { type: Boolean, default: false },
     ai_model: { type: String },
     ai_confidence: { type: Number },
+    campaign_id: { type: String, index: true }, // ✅ ADD THIS LINE
   },
   {
     collection: 'messages',
