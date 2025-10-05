@@ -34,6 +34,10 @@ export class CampaignController {
     return await this.campaignService.create(businessId, createCampaignDto);
   }
 
+  /**
+   * GET /campaigns?businessId=...
+   * Get all campaigns for a business
+   */
   @Get()
   async getAllCampaigns(@Query('businessId') businessId: string) {
     if (!businessId) {
@@ -43,45 +47,62 @@ export class CampaignController {
   }
 
   /**
-   * GET /campaigns/:id
+   * GET /campaigns/:id?businessId=...
    * Get a specific campaign details
    */
   @Get(':id')
-  async getCampaign(@Param('id') id: string) {
-    const businessId = 'default-business';
+  async getCampaign(
+    @Param('id') id: string,
+    @Query('businessId') businessId: string,
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
     return await this.campaignService.findOne(id, businessId);
   }
 
   /**
-   * GET /campaigns/:id/logs
-   * ✅ ACCEPTANCE CRITERIA: Get campaign logs showing message status
+   * GET /campaigns/:id/logs?businessId=...
    */
   @Get(':id/logs')
-  async getCampaignLogs(@Param('id') campaignId: string) {
-    const businessId = 'default-business';
+  async getCampaignLogs(
+    @Param('id') campaignId: string,
+    @Query('businessId') businessId: string,
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
     return await this.campaignService.getLogs(campaignId, businessId);
   }
 
   /**
-   * POST /campaigns/:id/execute
+   * POST /campaigns/:id/execute?businessId=...
    * Manually trigger campaign execution (useful for testing)
    */
   @Post(':id/execute')
-  async executeCampaign(@Param('id') id: string) {
-    const businessId = 'default-business';
+  async executeCampaign(
+    @Param('id') id: string,
+    @Query('businessId') businessId: string,
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
     await this.campaignService.findOne(id, businessId);
-
     await this.schedulerService.executeCampaign(id);
     return { message: 'Campaign execution started' };
   }
 
   /**
-   * DELETE /campaigns/:id
    * Cancel a scheduled campaign
    */
   @Delete(':id')
-  async cancelCampaign(@Param('id') id: string) {
-    const businessId = 'default-business';
+  async cancelCampaign(
+    @Param('id') id: string,
+    @Query('businessId') businessId: string,
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
     return await this.campaignService.cancel(id, businessId);
   }
 }
