@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  BadRequestException,
+  Query,
+} from '@nestjs/common';
 import { CampaignService } from './campaign.service';
 import { CampaignSchedulerService } from './campaign-scheduler.service';
 import { CreateCampaignDto } from './types';
@@ -15,18 +24,21 @@ export class CampaignController {
    * Create and schedule a new campaign
    */
   @Post()
-  async createCampaign(@Body() createCampaignDto: CreateCampaignDto) {
-    // Use a default businessId for now
-    const businessId = 'default-business';
+  async createCampaign(
+    @Body() createCampaignDto: CreateCampaignDto,
+    @Body('businessId') businessId: string, // client must provide it
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
     return await this.campaignService.create(businessId, createCampaignDto);
   }
-  /**
-   * GET /campaigns
-   * Get all campaigns
-   */
+
   @Get()
-  async getAllCampaigns() {
-    const businessId = 'default-business';
+  async getAllCampaigns(@Query('businessId') businessId: string) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
     return await this.campaignService.findAll(businessId);
   }
 

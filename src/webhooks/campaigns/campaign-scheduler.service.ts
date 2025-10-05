@@ -59,25 +59,21 @@ export class CampaignSchedulerService implements OnModuleInit {
 
       for (const log of logs) {
         try {
-          // Get the rendered message content (stored when campaign was created)
           const renderedMessage = log.message_content;
 
-          // Send message via WhatsApp
           await this.whatsappService.sendMessage({
-            to: log.lead_id, // phone number
+            to: log.lead_id,
             message: renderedMessage,
           });
 
-          // ✅ STORE IN MESSAGES COLLECTION (direction=out)
           const messageRecord = await this.messageRepository.create({
             chat_id: log.chat_id,
             provider_message_id: log.lead_id,
             direction: 'outbound',
             text: renderedMessage,
-            campaign_id: campaignId, // Link to campaign
+            campaign_id: campaignId,
           });
 
-          // Update campaign log with message reference
           await this.campaignLogRepository.updateById(log._id, {
             status: 'sent',
             message_id: messageRecord._id,
@@ -105,6 +101,13 @@ export class CampaignSchedulerService implements OnModuleInit {
         status: 'completed',
       });
 
+      // ✅ Clean up recurring task if exists
+      if (this.scheduledTasks.has(campaignId)) {
+        this.scheduledTasks.get(campaignId).stop();
+        this.scheduledTasks.delete(campaignId);
+        this.logger.log(`Stopped recurring task for campaign ${campaignId}`);
+      }
+
       this.logger.log(
         `Campaign ${campaign.name} completed. Sent: ${sentCount}, Failed: ${failedCount}`,
       );
@@ -113,6 +116,15 @@ export class CampaignSchedulerService implements OnModuleInit {
       await this.campaignRepository.updateById(campaignId, {
         status: 'failed',
       });
+
+      // ✅ Clean up recurring task on failure too
+      if (this.scheduledTasks.has(campaignId)) {
+        this.scheduledTasks.get(campaignId).stop();
+        this.scheduledTasks.delete(campaignId);
+        this.logger.log(
+          `Stopped recurring task for failed campaign ${campaignId}`,
+        );
+      }
     }
   }
 
