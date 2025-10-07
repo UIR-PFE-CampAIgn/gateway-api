@@ -20,4 +20,38 @@ export class LeadsRepository extends BaseRepository<Lead> {
       session,
     );
   }
+
+  // ✅ Add this method
+  async findAll(session?: ClientSession): Promise<Lead[]> {
+    return this.model.find({}, null, { session }).exec();
+  }
+
+  // ✅ Add search method
+  async search(
+    filters: {
+      search?: string;
+      provider?: string;
+    },
+    limit: number = 100,
+    session?: ClientSession,
+  ): Promise<Lead[]> {
+    const query: any = {};
+
+    if (filters.provider) {
+      query.provider = filters.provider;
+    }
+
+    if (filters.search) {
+      query.$or = [
+        { display_name: { $regex: filters.search, $options: 'i' } },
+        { provider_user_id: { $regex: filters.search, $options: 'i' } },
+      ];
+    }
+
+    return this.model
+      .find(query, null, { session })
+      .limit(limit)
+      .sort({ created_at: -1 })
+      .exec();
+  }
 }

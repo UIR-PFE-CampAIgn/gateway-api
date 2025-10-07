@@ -7,6 +7,8 @@ import { AppService } from './app.service';
 import { WhatsappWebhookModule } from './webhooks/whatsapp/whatsapp.module';
 import { TemplatesModule } from './webhooks/templates/templates.module';
 import { CampaignsModule } from './webhooks/campaigns/campaign.module';
+import { LeadModule } from './webhooks/leads/lead.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -17,6 +19,7 @@ import { CampaignsModule } from './webhooks/campaigns/campaign.module';
     WhatsappWebhookModule,
     TemplatesModule,
     CampaignsModule,
+    LeadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
