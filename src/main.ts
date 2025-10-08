@@ -13,7 +13,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3001',
       'http://localhost:3000',
-      'https://uir-pfe-campaign.vercel.app/',
+      'https://uir-pfe-campaign.vercel.app',
     ],
     credentials: true,
   });
