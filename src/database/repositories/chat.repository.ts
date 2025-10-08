@@ -21,4 +21,7 @@ export class ChatsRepository extends BaseRepository<Chat> {
     else update.$set = { ...(update.$set || {}), last_outbound_at: new Date() };
     return this.updateById(id, update, session);
   }
+  async count(filter: any = {}): Promise<number> {
+    return this.model.countDocuments(filter).exec();
+  }
 }

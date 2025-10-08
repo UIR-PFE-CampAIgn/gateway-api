@@ -8,6 +8,7 @@ import { WhatsappWebhookModule } from './webhooks/whatsapp/whatsapp.module';
 import { TemplatesModule } from './webhooks/templates/templates.module';
 import { CampaignsModule } from './webhooks/campaigns/campaign.module';
 import { LeadModule } from './webhooks/leads/lead.module';
+import { ChatsModule } from './webhooks/chats/chats.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { LeadModule } from './webhooks/leads/lead.module';
     TemplatesModule,
     CampaignsModule,
     LeadModule,
+    ChatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
