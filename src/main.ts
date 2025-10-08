@@ -10,7 +10,11 @@ async function bootstrap() {
 
   // Enable CORS for frontend running on port 3001
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: [
+      'http://localhost:3001',
+      'http://localhost:3000',
+      'https://uir-pfe-campaign.vercel.app/',
+    ],
     credentials: true,
   });
 
