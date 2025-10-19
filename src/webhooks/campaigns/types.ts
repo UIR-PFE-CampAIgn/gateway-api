@@ -4,7 +4,7 @@ export interface CreateCampaignDto {
   schedule_type: 'immediate' | 'scheduled' | 'recurring';
   scheduled_at?: Date;
   cron_expression?: string;
-  target_leads: string[];
+  target_leads: ('hot' | 'warm' | 'cold')[];
   lead_data?: Record<string, any>[];
 }
 
@@ -29,7 +29,7 @@ export interface Campaign {
   schedule_type: 'immediate' | 'scheduled' | 'recurring';
   scheduled_at?: Date;
   cron_expression?: string;
-  target_leads: string[];
+  target_leads: ('hot' | 'warm' | 'cold')[];
   status: 'draft' | 'scheduled' | 'running' | 'completed' | 'failed';
   total_recipients: number;
   sent_count: number;

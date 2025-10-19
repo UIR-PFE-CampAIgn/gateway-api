@@ -31,6 +31,7 @@ export class LeadsRepository extends BaseRepository<Lead> {
     filters: {
       search?: string;
       provider?: string;
+      score?: 'hot' | 'warm' | 'cold';
     },
     limit: number = 100,
     session?: ClientSession,
@@ -39,6 +40,10 @@ export class LeadsRepository extends BaseRepository<Lead> {
 
     if (filters.provider) {
       query.provider = filters.provider;
+    }
+
+    if (filters.score) {
+      query.score = { $eq: filters.score, $exists: true };
     }
 
     if (filters.search) {
@@ -53,5 +58,27 @@ export class LeadsRepository extends BaseRepository<Lead> {
       .limit(limit)
       .sort({ created_at: -1 })
       .exec();
+  }
+
+  // ✅ Add method to find leads by scores
+  async findByScores(
+    scores: ('hot' | 'warm' | 'cold')[],
+    session?: ClientSession,
+  ): Promise<Lead[]> {
+    return this.model
+      .find({ 
+        score: { $in: scores, $exists: true } 
+      }, null, { session })
+      .sort({ created_at: -1 })
+      .exec();
+  }
+
+  // ✅ Add method to update lead score
+  async updateScore(
+    leadId: string,
+    score: 'hot' | 'warm' | 'cold',
+    session?: ClientSession,
+  ): Promise<Lead> {
+    return this.updateById(leadId, { score }, session);
   }
 }

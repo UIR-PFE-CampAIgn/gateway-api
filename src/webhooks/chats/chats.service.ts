@@ -60,7 +60,7 @@ export class ChatsService {
         );
         const lastMessage = messages[0];
 
-        return {
+        const chatResponse: any = {
           _id: (chat as any)._id,
           lead_id: (chat as any).lead_id,
           lead_name: lead?.display_name,
@@ -81,7 +81,14 @@ export class ChatsService {
             : undefined,
           created_at: (chat as any).created_at,
           updated_at: (chat as any).updated_at,
-        } as ChatWithDetails;
+        };
+
+        // Only include lead_score if it exists
+        if (lead?.score) {
+          chatResponse.lead_score = lead.score;
+        }
+
+        return chatResponse as ChatWithDetails;
       }),
     );
 
@@ -106,7 +113,7 @@ export class ChatsService {
     );
     const lastMessage = messages[0];
 
-    return {
+    const chatResponse: any = {
       _id: (chat as any)._id,
       lead_id: (chat as any).lead_id,
       lead_name: lead?.display_name,
@@ -127,7 +134,14 @@ export class ChatsService {
         : undefined,
       created_at: (chat as any).created_at,
       updated_at: (chat as any).updated_at,
-    } as ChatWithDetails;
+    };
+
+    // Only include lead_score if it exists
+    if (lead?.score) {
+      chatResponse.lead_score = lead.score;
+    }
+
+    return chatResponse as ChatWithDetails;
   }
 
   async getMessagesByChatId(

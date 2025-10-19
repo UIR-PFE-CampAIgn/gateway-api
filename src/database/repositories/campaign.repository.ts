@@ -67,4 +67,15 @@ export class CampaignRepository extends BaseRepository<Campaign> {
   ): Promise<Campaign> {
     return this.updateById(campaignId, { status }, session);
   }
+
+  // ✅ Add method to get campaigns by target scores
+  async findByTargetScores(
+    scores: ('hot' | 'warm' | 'cold')[],
+    session?: ClientSession,
+  ): Promise<Campaign[]> {
+    return this.model
+      .find({ target_leads: { $in: scores } }, null, { session })
+      .sort({ created_at: -1 })
+      .exec();
+  }
 }
