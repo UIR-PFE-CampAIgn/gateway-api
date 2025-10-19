@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../common/http/http-client.service';
 import {
   ChatAnswerRequest,
-  ChatAnswerRequestSchema,
   ChatAnswerResponse,
   ChatAnswerResponseSchema,
 } from './ml.schemas';
@@ -35,8 +34,20 @@ export class MlClientService extends HttpClientService {
     if (!this.enabled) {
       throw new Error('ML client disabled: baseURL not configured');
     }
-    const payload = ChatAnswerRequestSchema.parse(req);
-    const res = await this['axios'].post('/chat/answer', payload);
+    const res = await this['axios'].post(
+      '/api/v1/chat/answer',
+      {
+        query: req.message,
+        context_limit: 5,
+        temperature: 0.7,
+        min_confidence: 0.4,
+        chat_id: req.channel,
+        timestamp: new Date().toLocaleTimeString(),
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
     const parsed = ChatAnswerResponseSchema.safeParse(res.data);
     if (!parsed.success) {
       throw new Error('Invalid ML response schema');

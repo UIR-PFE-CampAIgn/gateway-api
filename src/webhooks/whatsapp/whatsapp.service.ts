@@ -129,6 +129,7 @@ export class WhatsappWebhookService {
       toPhone,
       session,
     );
+    console.log('1- bsm', bsm);
     if (!bsm) {
       const altId = `whatsapp:${toPhone}`;
       bsm = await this.bsmRepo.findByPlatformAndPageId(
@@ -136,6 +137,7 @@ export class WhatsappWebhookService {
         altId,
         session,
       );
+      console.log('2- bsm', bsm);
     }
     if (!bsm) {
       const noPlus = toPhone?.startsWith('+') ? toPhone.slice(1) : toPhone;
@@ -145,6 +147,8 @@ export class WhatsappWebhookService {
           noPlus,
           session,
         );
+        console.log('3- bsm', bsm);
+
         if (!bsm) {
           const altNoPlus = `whatsapp:${noPlus}`;
           bsm = await this.bsmRepo.findByPlatformAndPageId(
@@ -152,6 +156,7 @@ export class WhatsappWebhookService {
             altNoPlus,
             session,
           );
+          console.log('4- bsm', bsm);
         }
       }
     }

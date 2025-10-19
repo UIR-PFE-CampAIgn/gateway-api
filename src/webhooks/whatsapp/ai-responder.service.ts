@@ -75,13 +75,16 @@ export class AiResponderService {
         ai_model: resp.model,
         ai_confidence: resp.confidence,
       } as any);
+
+      this.logger.log('Msg saved', msg);
       await this.chatsRepo.incrementMessageCount(chatId, false);
+      this.logger.log('Chat incremented');
 
       // Send via Twilio (from our WhatsApp number to the user)
       const from = fromNumber; // should be E.164 like +1415...
       const to = n.from.phone; // E.164 lead phone
       await this.twilioSender.sendWhatsAppMessage(from, to, resp.answer);
-
+      this.logger.log('TWilio message sent');
       this.logger.log(
         `AI reply sent: msg_id=${(msg as any)._id} chat_id=${chatId}`,
       );

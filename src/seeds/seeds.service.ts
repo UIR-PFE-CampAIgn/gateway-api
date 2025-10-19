@@ -33,9 +33,9 @@ export class SeedsService {
     const businessName =
       this.config.get<string>('SEED_BUSINESS_NAME') || 'My Test Business';
 
-    // Twilio WhatsApp receiving number in E.164, e.g. +14155238886
+    // Twilio WhatsApp receiving number in E.164, e.g. +14150000000
     const whatsappNumber =
-      this.config.get<string>('SEED_WHATSAPP_PAGE_ID') || '+14155238886';
+      this.config.get<string>('SEED_WHATSAPP_PAGE_ID') || '+14150000000';
     const webhookUrl =
       this.config.get<string>('SEED_WEBHOOK_URL') ||
       'http://localhost:3000/webhooks/whatsapp';

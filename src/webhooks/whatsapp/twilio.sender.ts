@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import twilio, { Twilio } from 'twilio';
+import { Twilio } from 'twilio';
 
 @Injectable()
 export class TwilioSenderService {
@@ -16,7 +16,7 @@ export class TwilioSenderService {
       );
       return null;
     }
-    this.client = twilio(sid, token);
+    this.client = new Twilio(sid, token);
     return this.client;
   }
 
@@ -30,7 +30,10 @@ export class TwilioSenderService {
     body: string,
   ): Promise<void> {
     const client = this.getClient();
-    if (!client) return;
+    if (!client) {
+      this.logger.error('No client', client);
+      return;
+    }
     try {
       await client.messages.create({
         from: this.formatWhatsApp(from),

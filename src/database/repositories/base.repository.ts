@@ -19,6 +19,7 @@ export class BaseRepository<T extends { _id: string }> {
   }
 
   findOne(filter: FilterQuery<T>, session?: ClientSession): Promise<T | null> {
+    console.log('modelName', this.model.collection.name, 'filter', filter);
     const q = this.model.findOne(filter).lean<T>();
     if (session) q.session(session);
     return q.exec();
