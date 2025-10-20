@@ -9,6 +9,10 @@ import { TemplatesModule } from './webhooks/templates/templates.module';
 import { CampaignsModule } from './webhooks/campaigns/campaign.module';
 import { LeadModule } from './webhooks/leads/lead.module';
 import { ChatsModule } from './webhooks/chats/chats.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+
 
 @Module({
   imports: [
@@ -22,8 +26,15 @@ import { ChatsModule } from './webhooks/chats/chats.module';
     CampaignsModule,
     LeadModule,
     ChatsModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // Apply JWT guard globally
+    },
+  ],
 })
 export class AppModule {}
