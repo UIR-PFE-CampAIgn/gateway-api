@@ -9,7 +9,7 @@ export interface Campaign {
   schedule_type: 'immediate' | 'scheduled' | 'recurring';
   scheduled_at?: Date;
   cron_expression?: string; // For recurring campaigns
-  target_leads: string[]; // Array of lead IDs
+  target_leads: ('hot' | 'warm' | 'cold')[]; // Array of lead scores to target
   status: 'draft' | 'scheduled' | 'running' | 'completed' | 'failed';
   total_recipients: number;
   sent_count: number;
@@ -33,7 +33,11 @@ export const CampaignSchema = new Schema<Campaign>(
     },
     scheduled_at: { type: Date },
     cron_expression: { type: String },
-    target_leads: { type: [String], required: true },
+    target_leads: {
+      type: [String],
+      enum: ['hot', 'warm', 'cold'],
+      required: true,
+    },
     status: {
       type: String,
       enum: ['draft', 'scheduled', 'running', 'completed', 'failed'],

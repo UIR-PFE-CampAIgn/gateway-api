@@ -1,5 +1,6 @@
-import { Controller, Get, Query, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Request, Param } from '@nestjs/common';
 import { LeadService } from './lead.service';
+import { UpdateLeadScoreDto, UpdateLeadScoreResponse } from './types';
 
 @Controller('leads')
 export class LeadController {
@@ -10,6 +11,7 @@ export class LeadController {
     @Request() req,
     @Query('search') search?: string,
     @Query('provider') provider?: string,
+    @Query('score') score?: 'hot' | 'warm' | 'cold',
     @Query('limit') limit?: string,
   ) {
     const businessId = req.user?.businessId || 'default-business';
@@ -18,12 +20,20 @@ export class LeadController {
       businessId,
       search,
       provider,
+      score,
       limit: limit ? parseInt(limit) : 100,
     });
   }
 
   @Get(':id')
-  async getLead(@Request() req, @Query('id') id: string) {
+  async getLead(@Param('id') id: string) {
     return await this.leadService.findOne(id);
+  }
+
+  @Post('score')
+  async updateLeadScore(
+    @Body() updateScoreDto: UpdateLeadScoreDto,
+  ): Promise<UpdateLeadScoreResponse> {
+    return await this.leadService.updateScore(updateScoreDto);
   }
 }

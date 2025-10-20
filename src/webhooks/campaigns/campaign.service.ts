@@ -12,7 +12,7 @@ interface CreateCampaignDto {
   schedule_type: 'immediate' | 'scheduled' | 'recurring';
   scheduled_at?: Date;
   cron_expression?: string;
-  target_leads: string[];
+  target_leads: ('hot' | 'warm' | 'cold')[];
   lead_data?: Record<string, any>[]; // Array of lead data for variable replacement
 }
 
@@ -50,25 +50,18 @@ export class CampaignService {
       failed_count: 0,
     });
 
-    // 3. Validate each lead and build campaign logs
+    // 3. Find leads matching target scores
+    const targetLeads = await this.leadsRepo.findByScores(dto.target_leads);
+    
+    // 4. Validate each lead and build campaign logs
     const validLogs = [];
     const skippedLeads = [];
 
-    for (let i = 0; i < dto.target_leads.length; i++) {
-      const leadPhone = dto.target_leads[i];
+    for (let i = 0; i < targetLeads.length; i++) {
+      const lead = targetLeads[i];
       const leadData = dto.lead_data?.[i] || {};
 
       try {
-        // Find lead by phone number
-        const lead = await this.leadsRepo.findOne({
-          provider_user_id: leadPhone,
-        });
-
-        if (!lead) {
-          skippedLeads.push({ phone: leadPhone, reason: 'Lead not found' });
-          continue;
-        }
-
         // Find active chat for this lead
         const chat = await this.chatsRepo.findOne({
           lead_id: lead._id,
@@ -76,7 +69,11 @@ export class CampaignService {
         });
 
         if (!chat) {
-          skippedLeads.push({ phone: leadPhone, reason: 'No active chat' });
+          skippedLeads.push({ 
+            lead_id: lead._id, 
+            provider_user_id: lead.provider_user_id,
+            reason: 'No active chat' 
+          });
           continue;
         }
 
@@ -86,34 +83,39 @@ export class CampaignService {
         // Add to valid logs
         validLogs.push({
           campaign_id: campaign._id,
-          lead_id: leadPhone,
+          lead_id: lead.provider_user_id, // Keep using provider_user_id for compatibility
           chat_id: chat._id,
           message_content: renderedMessage,
           status: 'pending',
         });
       } catch (error) {
-        skippedLeads.push({ phone: leadPhone, reason: 'Processing error' });
+        this.logger.error(`Error processing lead ${lead._id}: ${error.message}`);
+        skippedLeads.push({ 
+          lead_id: lead._id, 
+          provider_user_id: lead.provider_user_id,
+          reason: 'Processing error' 
+        });
       }
     }
 
-    // 4. Create all valid campaign logs
+    // 5. Create all valid campaign logs
     if (validLogs.length > 0) {
       await this.campaignLogRepository.bulkCreate(validLogs);
     }
 
-    // 5. Update campaign with actual valid recipient count
+    // 6. Update campaign with actual valid recipient count
     await this.campaignRepository.updateById(campaign._id, {
       total_recipients: validLogs.length,
     });
 
-    // 6. Log skipped leads
+    // 7. Log skipped leads
     if (skippedLeads.length > 0) {
       this.logger.warn(
         `Campaign ${campaign.name}: ${skippedLeads.length} leads skipped. Valid: ${validLogs.length}`,
       );
     }
 
-    // 7. Execute immediately if needed
+    // 8. Execute immediately if needed
     if (dto.schedule_type === 'immediate') {
       setImmediate(() => this.schedulerService.executeCampaign(campaign._id));
     } else if (dto.schedule_type === 'recurring' && dto.cron_expression) {

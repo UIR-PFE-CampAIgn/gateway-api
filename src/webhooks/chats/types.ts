@@ -3,6 +3,7 @@ export interface ChatWithDetails {
     lead_id: string;
     lead_name?: string;
     lead_phone?: string;
+    lead_score?: 'hot' | 'warm' | 'cold';
     business_social_media_id: string;
     status: string;
     running_summary?: string;
