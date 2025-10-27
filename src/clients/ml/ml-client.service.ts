@@ -38,6 +38,7 @@ export class MlClientService extends HttpClientService {
       '/api/v1/chat/answer',
       {
         query: req.message,
+        business_id: req.from,
         context_limit: 5,
         temperature: 0.7,
         min_confidence: 0.4,
