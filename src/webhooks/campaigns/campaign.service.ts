@@ -34,14 +34,16 @@ export class CampaignService {
     if (!template) {
       throw new NotFoundException('Template not found');
     }
-
+    const scheduledAtUTC = dto.scheduled_at
+      ? new Date(dto.scheduled_at)
+      : undefined;
     // 2. Create campaign first (without knowing final recipient count)
     const campaign = await this.campaignRepository.create({
       business_id: businessId,
       template_id: dto.template_id,
       name: dto.name,
       schedule_type: dto.schedule_type,
-      scheduled_at: dto.scheduled_at,
+      scheduled_at: scheduledAtUTC,
       cron_expression: dto.cron_expression,
       target_leads: dto.target_leads,
       status: dto.schedule_type === 'immediate' ? 'scheduled' : 'scheduled',
@@ -52,7 +54,7 @@ export class CampaignService {
 
     // 3. Find leads matching target scores
     const targetLeads = await this.leadsRepo.findByScores(dto.target_leads);
-    
+
     // 4. Validate each lead and build campaign logs
     const validLogs = [];
     const skippedLeads = [];
@@ -69,10 +71,10 @@ export class CampaignService {
         });
 
         if (!chat) {
-          skippedLeads.push({ 
-            lead_id: lead._id, 
+          skippedLeads.push({
+            lead_id: lead._id,
             provider_user_id: lead.provider_user_id,
-            reason: 'No active chat' 
+            reason: 'No active chat',
           });
           continue;
         }
@@ -89,11 +91,13 @@ export class CampaignService {
           status: 'pending',
         });
       } catch (error) {
-        this.logger.error(`Error processing lead ${lead._id}: ${error.message}`);
-        skippedLeads.push({ 
-          lead_id: lead._id, 
+        this.logger.error(
+          `Error processing lead ${lead._id}: ${error.message}`,
+        );
+        skippedLeads.push({
+          lead_id: lead._id,
           provider_user_id: lead.provider_user_id,
-          reason: 'Processing error' 
+          reason: 'Processing error',
         });
       }
     }

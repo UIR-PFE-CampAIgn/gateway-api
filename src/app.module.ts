@@ -9,6 +9,7 @@ import { TemplatesModule } from './webhooks/templates/templates.module';
 import { CampaignsModule } from './webhooks/campaigns/campaign.module';
 import { LeadModule } from './webhooks/leads/lead.module';
 import { ChatsModule } from './webhooks/chats/chats.module';
+import { BusinessModule } from './webhooks/business/business.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ChatsModule } from './webhooks/chats/chats.module';
     CampaignsModule,
     LeadModule,
     ChatsModule,
+    BusinessModule
   ],
   controllers: [AppController],
   providers: [AppService],

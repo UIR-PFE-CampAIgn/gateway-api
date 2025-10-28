@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as cron from 'node-cron';
 import { CampaignRepository } from '../../database/repositories/campaign.repository';
 import { CampaignLogRepository } from '../../database/repositories/campaign-log.repository';
-import { MessagesRepository } from '../../database/repositories/message.repository'; // Your existing repo
+import { MessagesRepository } from '../../database/repositories/message.repository';
 import { WhatsappWebhookService } from '../whatsapp/whatsapp.service';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class CampaignSchedulerService implements OnModuleInit {
   constructor(
     private readonly campaignRepository: CampaignRepository,
     private readonly campaignLogRepository: CampaignLogRepository,
-    private readonly messageRepository: MessagesRepository, // Use existing messages repo
+    private readonly messageRepository: MessagesRepository,
     private readonly whatsappService: WhatsappWebhookService,
   ) {}
 
@@ -26,13 +26,27 @@ export class CampaignSchedulerService implements OnModuleInit {
 
   private async checkScheduledCampaigns() {
     try {
-      console.log('Cron checking at:', new Date()); // Add this
-      const campaigns = await this.campaignRepository.findScheduledCampaigns();
-      console.log('Found campaigns:', campaigns.length); // Add this
+      const nowUTC = new Date();
+      this.logger.log(`Cron checking at UTC: ${nowUTC.toISOString()}`);
+
+      // Find campaigns that should run now
+      // Look for campaigns scheduled in the last minute
+      const oneMinuteAgo = new Date(nowUTC.getTime() - 60000);
+
+      const campaigns = await this.campaignRepository.find({
+        schedule_type: 'scheduled',
+        status: 'scheduled',
+        scheduled_at: {
+          $gte: oneMinuteAgo,
+          $lte: nowUTC,
+        },
+      });
+
+      this.logger.log(`Found ${campaigns.length} campaigns to execute`);
 
       for (const campaign of campaigns) {
         this.logger.log(
-          `Executing campaign: ${campaign.name} (${campaign._id})`,
+          `Executing campaign: ${campaign.name} (${campaign._id}) scheduled for ${campaign.scheduled_at}`,
         );
         await this.executeCampaign(campaign._id);
       }
@@ -101,7 +115,6 @@ export class CampaignSchedulerService implements OnModuleInit {
         status: 'completed',
       });
 
-      // ✅ Clean up recurring task if exists
       if (this.scheduledTasks.has(campaignId)) {
         this.scheduledTasks.get(campaignId).stop();
         this.scheduledTasks.delete(campaignId);
@@ -117,7 +130,6 @@ export class CampaignSchedulerService implements OnModuleInit {
         status: 'failed',
       });
 
-      // ✅ Clean up recurring task on failure too
       if (this.scheduledTasks.has(campaignId)) {
         this.scheduledTasks.get(campaignId).stop();
         this.scheduledTasks.delete(campaignId);
@@ -144,7 +156,7 @@ export class CampaignSchedulerService implements OnModuleInit {
 
     this.scheduledTasks.set(campaignId, task);
     this.logger.log(
-      `Scheduled recurring campaign ${campaignId} with cron: ${cronExpression}`,
+      `Scheduled recurring campaign ${campaignId} with cron: ${cronExpression} (UTC)`,
     );
   }
 

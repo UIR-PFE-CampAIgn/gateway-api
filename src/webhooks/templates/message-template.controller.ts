@@ -20,9 +20,7 @@ export class MessageTemplateController {
 
   @Post()
   async create(@Request() req, @Body() createDto: CreateMessageTemplateDto) {
-    // Get businessId from authenticated user/token
-    const businessId = req.user?.businessId || 'default-business-id';
-    return this.messageTemplateService.create(businessId, createDto);
+    return this.messageTemplateService.create(createDto);
   }
 
   @Get()
@@ -30,15 +28,14 @@ export class MessageTemplateController {
     @Request() req,
     @Query('category') category?: string,
     @Query('search') search?: string,
+    @Query('businessId') businessId?: string,
   ) {
-    const businessId = req.user?.businessId || 'default-business-id';
     return this.messageTemplateService.findAll(businessId, category, search);
   }
 
   @Get(':id')
   async findOne(@Request() req, @Param('id') id: string) {
-    const businessId = req.user?.businessId || 'default-business-id';
-    return this.messageTemplateService.findOne(id, businessId);
+    return this.messageTemplateService.findOne(id);
   }
 
   @Put(':id')
@@ -47,19 +44,16 @@ export class MessageTemplateController {
     @Param('id') id: string,
     @Body() updateDto: UpdateMessageTemplateDto,
   ) {
-    const businessId = req.user?.businessId || 'default-business-id';
-    return this.messageTemplateService.update(id, businessId, updateDto);
+    return this.messageTemplateService.update(id, updateDto);
   }
 
   @Delete(':id')
   async delete(@Request() req, @Param('id') id: string) {
-    const businessId = req.user?.businessId || 'default-business-id';
-    return this.messageTemplateService.delete(id, businessId);
+    return this.messageTemplateService.delete(id);
   }
 
   @Post(':id/duplicate')
   async duplicate(@Request() req, @Param('id') id: string) {
-    const businessId = req.user?.businessId || 'default-business-id';
-    return this.messageTemplateService.duplicate(id, businessId);
+    return this.messageTemplateService.duplicate(id);
   }
 }
