@@ -10,6 +10,8 @@ import { CampaignsModule } from './webhooks/campaigns/campaign.module';
 import { LeadModule } from './webhooks/leads/lead.module';
 import { ChatsModule } from './webhooks/chats/chats.module';
 import { BusinessModule } from './webhooks/business/business.module';
+import { DashboardModule } from './webhooks/dashboard/dashboard.module';
+import { UsersModule } from './webhooks/user/user.module';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { BusinessModule } from './webhooks/business/business.module';
     CampaignsModule,
     LeadModule,
     ChatsModule,
-    BusinessModule
+    BusinessModule,
+    DashboardModule,
+    UsersModule
   ],
   controllers: [AppController],
   providers: [AppService],
