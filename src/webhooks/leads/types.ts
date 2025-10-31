@@ -3,11 +3,13 @@ export interface LeadResponse {
   provider: string;
   provider_user_id: string;
   display_name?: string;
+  business_id: string;
   score?: 'hot' | 'warm' | 'cold';
   created_at: string;
 }
 
 export interface GetLeadsQuery {
+  businessId: string; // ✅ Made required
   search?: string;
   provider?: string;
   score?: 'hot' | 'warm' | 'cold';

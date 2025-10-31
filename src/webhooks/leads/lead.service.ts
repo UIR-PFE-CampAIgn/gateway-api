@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { LeadsRepository } from '../../database/repositories/lead.repository';
 import { UpdateLeadScoreDto, UpdateLeadScoreResponse } from './types';
 
@@ -13,8 +17,10 @@ export class LeadService {
     score?: 'hot' | 'warm' | 'cold';
     limit?: number;
   }) {
+    // Pass businessId to repository search
     const leads = await this.leadsRepository.search(
       {
+        businessId: options.businessId, // ✅ Add businessId to filter
         search: options.search,
         provider: options.provider,
         score: options.score,
@@ -22,7 +28,7 @@ export class LeadService {
       options.limit || 100,
     );
 
-    return leads.map(lead => this.formatResponse(lead));
+    return leads.map((lead) => this.formatResponse(lead));
   }
 
   async findOne(id: string) {
@@ -64,6 +70,7 @@ export class LeadService {
       provider_user_id: lead.provider_user_id,
       display_name: lead.display_name,
       created_at: lead.created_at,
+      business_id: lead.business_id,
     };
 
     // Only include score if it exists

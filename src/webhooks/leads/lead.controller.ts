@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Query, Request, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Request,
+  Param,
+  BadRequestException,
+} from '@nestjs/common';
 import { LeadService } from './lead.service';
 import { UpdateLeadScoreDto, UpdateLeadScoreResponse } from './types';
 
@@ -9,12 +18,17 @@ export class LeadController {
   @Get()
   async getAllLeads(
     @Request() req,
+    @Query('businessId') businessIdQuery?: string,
     @Query('search') search?: string,
     @Query('provider') provider?: string,
     @Query('score') score?: 'hot' | 'warm' | 'cold',
     @Query('limit') limit?: string,
   ) {
-    const businessId = req.user?.businessId || 'default-business';
+    const businessId = businessIdQuery || req.user?.businessId;
+
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
 
     return await this.leadService.findAll({
       businessId,

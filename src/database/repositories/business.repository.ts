@@ -13,4 +13,7 @@ export class BusinessesRepository extends BaseRepository<Business> {
   findByOwner(userId: string) {
     return this.findMany({ user_id: userId });
   }
+  async count(filter: any = {}): Promise<number> {
+    return this.model.countDocuments(filter).exec();
+  }
 }

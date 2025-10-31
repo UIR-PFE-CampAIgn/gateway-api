@@ -7,6 +7,9 @@ export interface User {
   email: string;
   fullname?: string;
   photo_url?: string;
+  phone?: string;
+  address?: string;
+  bio?: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -20,6 +23,9 @@ export const UserSchema = new Schema<User>(
     email: { type: String, required: true, index: true },
     fullname: { type: String },
     photo_url: { type: String },
+    phone: { type: String },
+    address: { type: String },
+    bio: { type: String },
   },
   {
     collection: 'users',

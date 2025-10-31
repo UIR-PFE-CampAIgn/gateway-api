@@ -13,4 +13,17 @@ export class UsersRepository extends BaseRepository<User> {
   findByUserId(userId: string) {
     return this.findOne({ user_id: userId });
   }
+  async updateByUserId(
+    userId: string,
+    updateData: Partial<User>,
+  ): Promise<User | null> {
+    return this.model
+      .findOneAndUpdate(
+        { user_id: userId },
+        { $set: updateData },
+        { new: true }
+      )
+      .lean<User>()
+      .exec();
+  }
 }

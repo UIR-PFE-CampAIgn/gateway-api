@@ -5,6 +5,7 @@ import { LeadsRepository } from '../../database/repositories/lead.repository';
 import { WhatsappWebhookService } from '../whatsapp/whatsapp.service';
 import { ChatWithDetails, MessageWithDetails, SendMessageDto } from './types';
 import { MessageType } from 'src/database/schemas/message.schema';
+import { BusinessSocialMediaRepository } from 'src/database/repositories/business-social-media.repository';
 @Injectable()
 export class ChatsService {
   constructor(
@@ -12,6 +13,8 @@ export class ChatsService {
     private readonly messagesRepository: MessagesRepository,
     private readonly leadsRepository: LeadsRepository,
     private readonly whatsappService: WhatsappWebhookService,
+    private readonly BusinessSocialMediaRepository: BusinessSocialMediaRepository,
+
   ) {}
 
   async getAllChats(
@@ -25,8 +28,31 @@ export class ChatsService {
   }> {
     const { status = 'open', page = 1, limit = 20, search } = query;
 
+    // First, find all business_social_media_ids for this business
+    const businessSocialMedias =
+      await this.BusinessSocialMediaRepository.findMany({
+        business_id: businessId,
+        is_active: true, // Optional: only get active social media accounts
+      });
+
+    if (businessSocialMedias.length === 0) {
+      return {
+        chats: [],
+        total: 0,
+        page,
+        limit,
+      };
+    }
+
+    const businessSocialMediaIds = businessSocialMedias.map(
+      (bsm) => (bsm as any)._id,
+    );
+
     // Build filter
-    const filter: any = { status };
+    const filter: any = {
+      status,
+      business_social_media_id: { $in: businessSocialMediaIds },
+    };
 
     // If search provided, find leads first
     if (search) {

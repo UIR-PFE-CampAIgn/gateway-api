@@ -5,6 +5,7 @@ export interface Lead {
   _id: string; // UUID
   provider: string; // e.g., 'twilio'
   provider_user_id: string; // origin platform user id
+  business_id: string;
   display_name?: string;
   score?: 'hot' | 'warm' | 'cold'; // Lead scoring (optional)
   created_at?: Date;
@@ -18,6 +19,7 @@ export const LeadSchema = new Schema<Lead>(
     provider: { type: String, required: true },
     provider_user_id: { type: String, required: true },
     display_name: { type: String },
+    business_id: { type: String, required: true },
     score: {
       type: String,
       enum: ['hot', 'warm', 'cold'],
