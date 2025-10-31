@@ -14,6 +14,7 @@ import { MessageTemplateResponse } from '../templates/types';
 import { Campaign } from '../campaigns/types';
 import { LeadsRepository } from '../../database/repositories/lead.repository';
 import { MessageTemplateRepository } from 'src/database/repositories/message-template.repository';
+import { MlClientService } from 'src/clients/ml/ml-client.service';
 @Injectable()
 export class BusinessService {
   constructor(
@@ -21,22 +22,44 @@ export class BusinessService {
     private readonly campaignRepository: CampaignRepository,
     private readonly LeadsRepository: LeadsRepository,
     private readonly MessageTemplateRepository: MessageTemplateRepository,
+    private readonly mlClientService: MlClientService,
   ) {}
 
   async create(
     userId: string,
     dto: CreateBusinessDto,
   ): Promise<BusinessResponse> {
-    // 🔹 Debug: log the DTO and userId
-    console.log('📦 Backend received create business request:');
-    console.log('userId:', userId);
-    console.log('DTO:', dto);
+    console.log('📦 Backend received create business request:', dto);
+
+    // 1. Create the business
     const business = await this.businessRepository.create({
       ...dto,
       user_id: userId,
       is_active: true,
       timezone: dto.timezone || 'UTC',
     });
+
+    // 2. Send business data to ML service (feed vector)
+    try {
+      await this.mlClientService.feedVector({
+        content: `${business.name} ${business.description || ''}`,
+        business_id: business._id,
+        metadata: {
+          industry: business.industry,
+          email: business.email,
+          phone: business.phone,
+          website: business.website,
+        },
+      });
+      console.log(`✅ Business ${business._id} fed to ML service`);
+    } catch (error) {
+      console.warn(
+        `⚠️ Failed to feed business ${business._id} to ML service:`,
+        error,
+      );
+    }
+
+    // 3. Return formatted response
     return this.formatBusiness(business, 0);
   }
 
@@ -188,12 +211,66 @@ export class BusinessService {
       throw new NotFoundException('Business not found');
     }
 
-    // Check ownership
+    // 🔒 Ensure ownership
     if ((business as any).user_id !== userId) {
       throw new ForbiddenException('You do not have access to this business');
     }
 
-    await this.businessRepository.deleteById(businessId);
+    let session = null;
+
+    try {
+      // 🧩 Try to start a transaction (works on Atlas)
+      session = await this.businessRepository.startSession();
+      session.startTransaction();
+
+      // 🔹 1. Delete related data
+      await this.campaignRepository.deleteMany(
+        { business_id: businessId },
+        { session },
+      );
+      await this.LeadsRepository.deleteMany(
+        { business_id: businessId },
+        { session },
+      );
+      await this.MessageTemplateRepository.deleteMany(
+        { business_id: businessId },
+        { session },
+      );
+
+      // 🔹 2. Delete the business itself
+      await this.businessRepository.deleteOne({ _id: businessId }, { session });
+
+      // ✅ Commit transaction (Atlas)
+      await session.commitTransaction();
+    } catch (error: any) {
+      if (session) {
+        await session.abortTransaction(); // rollback if failed
+      }
+
+      // ⚠️ If transactions aren't supported (local Compass)
+      if (
+        error.message?.includes(
+          'Transaction numbers are only allowed on a replica set member',
+        )
+      ) {
+        console.warn(
+          '⚠️ Transactions not supported in this environment — using fallback deletes.',
+        );
+
+        await Promise.all([
+          this.campaignRepository.deleteMany({ business_id: businessId }),
+          this.LeadsRepository.deleteMany({ business_id: businessId }),
+          this.MessageTemplateRepository.deleteMany({
+            business_id: businessId,
+          }),
+        ]);
+        await this.businessRepository.deleteOne({ _id: businessId });
+      } else {
+        throw error;
+      }
+    } finally {
+      if (session) session.endSession();
+    }
   }
 
   async deactivate(

@@ -29,15 +29,17 @@ export class CampaignService {
   ) {}
 
   async create(businessId: string, dto: CreateCampaignDto) {
-    // 1. Validate template exists
+    // 1️⃣ Validate template exists
     const template = await this.templateRepository.findById(dto.template_id);
     if (!template) {
       throw new NotFoundException('Template not found');
     }
+
     const scheduledAtUTC = dto.scheduled_at
       ? new Date(dto.scheduled_at)
       : undefined;
-    // 2. Create campaign first (without knowing final recipient count)
+
+    // 2️⃣ Create campaign first (without knowing final recipient count)
     const campaign = await this.campaignRepository.create({
       business_id: businessId,
       template_id: dto.template_id,
@@ -46,27 +48,31 @@ export class CampaignService {
       scheduled_at: scheduledAtUTC,
       cron_expression: dto.cron_expression,
       target_leads: dto.target_leads,
-      status: dto.schedule_type === 'immediate' ? 'scheduled' : 'scheduled',
+      status: 'scheduled',
       total_recipients: 0, // Will update after validation
       sent_count: 0,
       failed_count: 0,
     });
 
-    // 3. Find leads matching target scores
-    const targetLeads = await this.leadsRepo.findByScores(dto.target_leads);
+    // 3️⃣ Find leads matching target scores **and belonging to this business**
+    const targetLeads = await this.leadsRepo.findMany({
+      score: { $in: dto.target_leads },
+      business_id: businessId, // ✅ Only leads from the same business
+    });
 
-    // 4. Validate each lead and build campaign logs
+    // 4️⃣ Validate each lead and build campaign logs
     const validLogs = [];
     const skippedLeads = [];
 
-    for (let i = 0; i < targetLeads.length; i++) {
-      const lead = targetLeads[i];
-      const leadData = dto.lead_data?.[i] || {};
+    for (const lead of targetLeads) {
+      const leadData =
+        dto.lead_data?.find((ld) => ld.lead_id === lead._id) || {};
 
       try {
-        // Find active chat for this lead
+        // Find active chat for this lead **and the same business**
         const chat = await this.chatsRepo.findOne({
           lead_id: lead._id,
+          business_id: businessId, // ✅ Filter by business
           status: 'open',
         });
 
@@ -79,13 +85,13 @@ export class CampaignService {
           continue;
         }
 
-        // Render template with lead data
+        // Render message
         const renderedMessage = this.renderTemplate(template.content, leadData);
 
         // Add to valid logs
         validLogs.push({
           campaign_id: campaign._id,
-          lead_id: lead.provider_user_id, // Keep using provider_user_id for compatibility
+          lead_id: lead.provider_user_id,
           chat_id: chat._id,
           message_content: renderedMessage,
           status: 'pending',
@@ -102,24 +108,24 @@ export class CampaignService {
       }
     }
 
-    // 5. Create all valid campaign logs
+    // 5️⃣ Create all valid campaign logs
     if (validLogs.length > 0) {
       await this.campaignLogRepository.bulkCreate(validLogs);
     }
 
-    // 6. Update campaign with actual valid recipient count
+    // 6️⃣ Update campaign with actual valid recipient count
     await this.campaignRepository.updateById(campaign._id, {
       total_recipients: validLogs.length,
     });
 
-    // 7. Log skipped leads
+    // 7️⃣ Log skipped leads
     if (skippedLeads.length > 0) {
       this.logger.warn(
         `Campaign ${campaign.name}: ${skippedLeads.length} leads skipped. Valid: ${validLogs.length}`,
       );
     }
 
-    // 8. Execute immediately if needed
+    // 8️⃣ Execute immediately if needed
     if (dto.schedule_type === 'immediate') {
       setImmediate(() => this.schedulerService.executeCampaign(campaign._id));
     } else if (dto.schedule_type === 'recurring' && dto.cron_expression) {

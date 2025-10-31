@@ -5,6 +5,9 @@ import {
   ChatAnswerRequest,
   ChatAnswerResponse,
   ChatAnswerResponseSchema,
+  FeedVectorRequest,
+  FeedVectorResponse,
+  FeedVectorResponseSchema,
 } from './ml.schemas';
 
 @Injectable()
@@ -55,6 +58,17 @@ export class MlClientService extends HttpClientService {
     if (!parsed.data.answer) {
       throw new Error('ML response has empty answer');
     }
+    return parsed.data;
+  }
+  async feedVector(req: FeedVectorRequest): Promise<FeedVectorResponse> {
+    if (!this.enabled)
+      throw new Error('ML client disabled: baseURL not configured');
+
+    const res = await this['axios'].post('/v1/feed_vector', req);
+
+    const parsed = FeedVectorResponseSchema.safeParse(res.data);
+    if (!parsed.success) throw new Error('Invalid feed_vector response schema');
+
     return parsed.data;
   }
 }
