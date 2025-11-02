@@ -71,4 +71,16 @@ export class MlClientService extends HttpClientService {
 
     return parsed.data;
   }
+  async deleteVector(businessId: string): Promise<{ success: boolean; business_id: string }> {
+    if (!this.enabled) {
+      throw new Error('ML client disabled: baseURL not configured');
+    }
+
+    const res = await this['axios'].delete('/v1/feed_vector', {
+      data: { business_id: businessId },
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    return res.data;
+  }
 }
