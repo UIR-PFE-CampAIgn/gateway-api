@@ -1,13 +1,16 @@
 export interface CreateMessageTemplateDto {
   name: string;
   content: string;
+  business_id: string;
   category:
     | 'onboarding'
     | 'transactional'
     | 'follow-up'
     | 'promotional'
+    | 'welcome'
     | 'general';
   language?: string;
+  template_key?: string;
 }
 
 export interface UpdateMessageTemplateDto {
@@ -20,6 +23,7 @@ export interface UpdateMessageTemplateDto {
     | 'promotional'
     | 'general';
   language?: string;
+  template_key?: string;
 }
 
 export interface MessageTemplateResponse {
@@ -32,6 +36,7 @@ export interface MessageTemplateResponse {
   variables: string[];
   usage_count: number;
   last_used_at: Date | null;
+  template_key?: string;
   created_at: Date;
   updated_at: Date;
 }

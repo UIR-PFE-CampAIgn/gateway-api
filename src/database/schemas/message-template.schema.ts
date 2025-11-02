@@ -11,6 +11,7 @@ export interface MessageTemplate {
   variables: string[]; // extracted from {{variable}} syntax
   usage_count: number; // default 0
   last_used_at?: Date;
+  template_key?: string; // e.g. 'WELCOME_MESSAGE'
   is_active: boolean; // default true
   created_at?: Date;
   updated_at?: Date;
@@ -40,6 +41,7 @@ export const MessageTemplateSchema = new Schema<MessageTemplate>(
     variables: { type: [String], default: [] },
     usage_count: { type: Number, default: 0 },
     last_used_at: { type: Date },
+    template_key: { type: String, index: true },
     is_active: { type: Boolean, default: true, index: true },
   },
   {

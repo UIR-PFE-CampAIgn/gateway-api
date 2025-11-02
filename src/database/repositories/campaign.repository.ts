@@ -10,17 +10,22 @@ export class CampaignRepository extends BaseRepository<Campaign> {
     super(model);
   }
 
-  async findScheduledCampaigns(session?: ClientSession): Promise<Campaign[]> {
-    const now = new Date();
+  async find(query: any) {
+    return this.model.find(query).exec();
+  }
+  async findScheduledCampaigns() {
+    const nowUTC = new Date();
+    const oneMinuteAgo = new Date(nowUTC.getTime() - 60000);
+
     return this.model
-      .find(
-        {
-          status: 'scheduled',
-          scheduled_at: { $lte: now },
+      .find({
+        schedule_type: 'scheduled',
+        status: 'scheduled',
+        scheduled_at: {
+          $gte: oneMinuteAgo,
+          $lte: nowUTC,
         },
-        null,
-        { session },
-      )
+      })
       .exec();
   }
 
@@ -77,5 +82,8 @@ export class CampaignRepository extends BaseRepository<Campaign> {
       .find({ target_leads: { $in: scores } }, null, { session })
       .sort({ created_at: -1 })
       .exec();
+  }
+  async count(filter: any = {}): Promise<number> {
+    return this.model.countDocuments(filter).exec();
   }
 }

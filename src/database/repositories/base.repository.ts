@@ -80,4 +80,20 @@ export class BaseRepository<T extends { _id: string }> {
       .lean<T>()
       .exec() as unknown as Promise<T>;
   }
+  async deleteOne(
+    filter: FilterQuery<T>,
+    options: { session?: ClientSession } = {},
+  ): Promise<void> {
+    await this.model.deleteOne(filter, options).exec();
+  }
+
+  async deleteMany(
+    filter: FilterQuery<T>,
+    options: { session?: ClientSession } = {},
+  ): Promise<void> {
+    await this.model.deleteMany(filter, options).exec();
+  }
+  async startSession(): Promise<ClientSession> {
+    return this.model.startSession();
+  }
 }

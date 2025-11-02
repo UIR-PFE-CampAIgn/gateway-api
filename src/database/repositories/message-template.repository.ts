@@ -32,6 +32,19 @@ export class MessageTemplateRepository extends BaseRepository<MessageTemplate> {
       .sort({ created_at: -1 })
       .exec();
   }
+  async findByTemplateKey(
+    businessId: string,
+    templateKey: string,
+    session?: ClientSession,
+  ): Promise<MessageTemplate | null> {
+    return this.model
+      .findOne(
+        { business_id: businessId, template_key: templateKey, is_active: true },
+        null,
+        { session },
+      )
+      .exec();
+  }
 
   async searchTemplates(
     businessId: string,

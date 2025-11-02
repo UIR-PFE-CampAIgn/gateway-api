@@ -20,4 +20,7 @@ export class MessagesRepository extends BaseRepository<Message> {
       },
     );
   }
+  async count(filter: any = {}): Promise<number> {
+    return this.model.countDocuments(filter).exec();
+  }
 }

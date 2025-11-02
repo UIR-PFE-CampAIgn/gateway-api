@@ -19,13 +19,12 @@ export class MessageTemplateService {
   }
 
   async create(
-    businessId: string,
     dto: CreateMessageTemplateDto,
   ): Promise<MessageTemplateResponse> {
     const variables = this.extractVariables(dto.content);
 
     const template = await this.messageTemplateRepository.create({
-      business_id: businessId,
+      business_id: dto.business_id,
       name: dto.name,
       content: dto.content,
       category: dto.category,
@@ -33,7 +32,9 @@ export class MessageTemplateService {
       variables,
       usage_count: 0,
       is_active: true,
+      template_key: dto.template_key,
     });
+    console.log('temaplte data', template);
 
     return this.formatResponse(template);
   }
@@ -59,17 +60,16 @@ export class MessageTemplateService {
       templates =
         await this.messageTemplateRepository.findByBusiness(businessId);
     }
+    console.log('Finding templates for businessId:', businessId);
+    console.log('Found templates:', templates);
 
     return templates.map((t) => this.formatResponse(t));
   }
 
-  async findOne(
-    id: string,
-    businessId: string,
-  ): Promise<MessageTemplateResponse> {
+  async findOne(id: string): Promise<MessageTemplateResponse> {
     const template = await this.messageTemplateRepository.findById(id);
 
-    if (!template || template.business_id !== businessId) {
+    if (!template) {
       throw new NotFoundException('Template not found');
     }
 
@@ -78,12 +78,11 @@ export class MessageTemplateService {
 
   async update(
     id: string,
-    businessId: string,
     dto: UpdateMessageTemplateDto,
   ): Promise<MessageTemplateResponse> {
     const template = await this.messageTemplateRepository.findById(id);
 
-    if (!template || template.business_id !== businessId) {
+    if (!template) {
       throw new NotFoundException('Template not found');
     }
 
@@ -100,10 +99,10 @@ export class MessageTemplateService {
     return this.formatResponse(updated);
   }
 
-  async delete(id: string, businessId: string): Promise<{ message: string }> {
+  async delete(id: string): Promise<{ message: string }> {
     const template = await this.messageTemplateRepository.findById(id);
 
-    if (!template || template.business_id !== businessId) {
+    if (!template) {
       throw new NotFoundException('Template not found');
     }
 
@@ -112,18 +111,14 @@ export class MessageTemplateService {
     return { message: 'Template deleted successfully' };
   }
 
-  async duplicate(
-    id: string,
-    businessId: string,
-  ): Promise<MessageTemplateResponse> {
+  async duplicate(id: string): Promise<MessageTemplateResponse> {
     const template = await this.messageTemplateRepository.findById(id);
 
-    if (!template || template.business_id !== businessId) {
+    if (!template) {
       throw new NotFoundException('Template not found');
     }
-
     const duplicated = await this.messageTemplateRepository.create({
-      business_id: businessId,
+      business_id: template.business_id,
       name: `${template.name} (Copy)`,
       content: template.content,
       category: template.category,

@@ -27,25 +27,20 @@ export class LeadsRepository extends BaseRepository<Lead> {
   }
 
   // ✅ Add search method
-  async search(
+ async search(
     filters: {
+      businessId: string; // ✅ Add businessId to filters
       search?: string;
       provider?: string;
       score?: 'hot' | 'warm' | 'cold';
     },
     limit: number = 100,
-    session?: ClientSession,
-  ): Promise<Lead[]> {
-    const query: any = {};
+  ) {
+    const query: any = {
+      business_id: filters.businessId, // ✅ Filter by businessId
+    };
 
-    if (filters.provider) {
-      query.provider = filters.provider;
-    }
-
-    if (filters.score) {
-      query.score = { $eq: filters.score, $exists: true };
-    }
-
+    // Add search filter
     if (filters.search) {
       query.$or = [
         { display_name: { $regex: filters.search, $options: 'i' } },
@@ -53,8 +48,18 @@ export class LeadsRepository extends BaseRepository<Lead> {
       ];
     }
 
-    return this.model
-      .find(query, null, { session })
+    // Add provider filter
+    if (filters.provider) {
+      query.provider = filters.provider;
+    }
+
+    // Add score filter
+    if (filters.score) {
+      query.score = filters.score;
+    }
+
+    return await this.model
+      .find(query)
       .limit(limit)
       .sort({ created_at: -1 })
       .exec();
@@ -80,5 +85,9 @@ export class LeadsRepository extends BaseRepository<Lead> {
     session?: ClientSession,
   ): Promise<Lead> {
     return this.updateById(leadId, { score }, session);
+  }
+
+  async count(filter: any = {}): Promise<number> {
+    return this.model.countDocuments(filter).exec();
   }
 }

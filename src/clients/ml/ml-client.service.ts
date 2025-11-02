@@ -5,6 +5,9 @@ import {
   ChatAnswerRequest,
   ChatAnswerResponse,
   ChatAnswerResponseSchema,
+  FeedVectorRequest,
+  FeedVectorResponse,
+  FeedVectorResponseSchema,
 } from './ml.schemas';
 
 @Injectable()
@@ -57,5 +60,28 @@ export class MlClientService extends HttpClientService {
       throw new Error('ML response has empty answer');
     }
     return parsed.data;
+  }
+  async feedVector(req: FeedVectorRequest): Promise<FeedVectorResponse> {
+    if (!this.enabled)
+      throw new Error('ML client disabled: baseURL not configured');
+
+    const res = await this['axios'].post('/v1/feed_vector', req);
+
+    const parsed = FeedVectorResponseSchema.safeParse(res.data);
+    if (!parsed.success) throw new Error('Invalid feed_vector response schema');
+
+    return parsed.data;
+  }
+  async deleteVector(businessId: string): Promise<{ success: boolean; business_id: string }> {
+    if (!this.enabled) {
+      throw new Error('ML client disabled: baseURL not configured');
+    }
+
+    const res = await this['axios'].delete('/v1/feed_vector', {
+      data: { business_id: businessId },
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    return res.data;
   }
 }
