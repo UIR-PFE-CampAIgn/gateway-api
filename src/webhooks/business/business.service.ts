@@ -161,6 +161,7 @@ export class BusinessService {
       name: business.name,
       phone: business.phone,
       address: business.address,
+      website: business.website,
       industry: business.industry,
       email: business.email,
       is_active: business.is_active,

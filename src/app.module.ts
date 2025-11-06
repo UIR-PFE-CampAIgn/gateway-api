@@ -12,6 +12,7 @@ import { ChatsModule } from './webhooks/chats/chats.module';
 import { BusinessModule } from './webhooks/business/business.module';
 import { DashboardModule } from './webhooks/dashboard/dashboard.module';
 import { UsersModule } from './webhooks/user/user.module';
+import { ProductsModule } from './webhooks/products/products.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { UsersModule } from './webhooks/user/user.module';
     ChatsModule,
     BusinessModule,
     DashboardModule,
-    UsersModule
+    UsersModule,
+    ProductsModule
   ],
   controllers: [AppController],
   providers: [AppService],

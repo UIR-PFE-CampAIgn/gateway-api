@@ -17,6 +17,8 @@ import { CampaignRepository } from './repositories/campaign.repository';
 import { CampaignLogSchema } from './schemas/campaign-log.schema';
 import { CampaignLogRepository } from './repositories/campaign-log.repository';
 import { MessageTemplateSchema } from './schemas/message-template.schema';
+import { ProductSchema } from './schemas/product.schema';
+import { ProductRepository } from './repositories/product.repository';
 import { MessageTemplateRepository } from './repositories/message-template.repository';
 @Module({
   imports: [
@@ -30,6 +32,7 @@ import { MessageTemplateRepository } from './repositories/message-template.repos
       { name: 'Campaign', schema: CampaignSchema },
       { name: 'CampaignLog', schema: CampaignLogSchema },
       { name: 'MessageTemplate', schema: MessageTemplateSchema },
+      { name: 'Product', schema: ProductSchema },
     ]),
   ],
   providers: [
@@ -42,6 +45,7 @@ import { MessageTemplateRepository } from './repositories/message-template.repos
     CampaignLogRepository,
     CampaignRepository,
     MessageTemplateRepository,
+    ProductRepository,
   ],
   exports: [
     MongooseModule,
@@ -54,6 +58,7 @@ import { MessageTemplateRepository } from './repositories/message-template.repos
     CampaignLogRepository,
     CampaignRepository,
     MessageTemplateRepository,
+    ProductRepository,
   ],
 })
 export class DatabaseModule {}
