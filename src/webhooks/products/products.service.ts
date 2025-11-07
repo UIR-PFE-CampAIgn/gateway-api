@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProductRepository } from '../../database/repositories/product.repository';
+import { VectorSyncService } from '../../clients/ml/vector-sync.service';
 import { CreateProductDto, UpdateProductDto, ProductResponse } from './types';
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly productRepository: ProductRepository) {}
+  constructor(
+    private readonly productRepository: ProductRepository,
+    private readonly vectorSyncService: VectorSyncService,
+  ) {}
 
   async create(dto: CreateProductDto): Promise<ProductResponse> {
     const product = await this.productRepository.create({
@@ -17,6 +21,11 @@ export class ProductsService {
       stock: dto.stock ?? 0,
       category: dto.category,
       is_active: true,
+    });
+
+    // Sync to ML service
+    await this.vectorSyncService.syncProduct(product).catch((error) => {
+      console.warn(`⚠️ Vector sync failed for product ${product._id}`, error);
     });
 
     return this.format(product);
@@ -63,6 +72,12 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
     const updated = await this.productRepository.updateById(id, dto as any);
+
+    // Sync to ML service
+    await this.vectorSyncService.syncProduct(updated).catch((error) => {
+      console.warn(`⚠️ Vector sync failed for product ${updated._id}`, error);
+    });
+
     return this.format(updated);
   }
 
@@ -71,6 +86,17 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
+
+    // Notify ML service about deletion
+    await this.vectorSyncService
+      .deleteProduct(product._id, product.business_id)
+      .catch((error) => {
+        console.warn(
+          `⚠️ Vector sync deletion failed for product ${product._id}`,
+          error,
+        );
+      });
+
     await this.productRepository.delete(id);
     return { message: 'Product deleted successfully' };
   }

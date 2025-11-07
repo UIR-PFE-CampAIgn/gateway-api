@@ -20,18 +20,23 @@ export const ChatAnswerResponseSchema = z.object({
   model: z.string().optional(),
   confidence: z.number().optional(),
 });
-export const FeedVectorRequestSchema = z.object({
+export const FeedVectorRecordSchema = z.object({
+  field: z.string(),
   content: z.string(),
-  business_id: z.string(),
   metadata: z.record(z.string(), z.any()).optional(),
   id: z.string().optional(),
+});
+
+export const FeedVectorRequestSchema = z.object({
+  business_id: z.string(),
+  records: z.array(FeedVectorRecordSchema),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const FeedVectorResponseSchema = z.object({
   id: z.string(),
   status: z.string(),
 });
-
 export type FeedVectorRequest = z.infer<typeof FeedVectorRequestSchema>;
 export type FeedVectorResponse = z.infer<typeof FeedVectorResponseSchema>;
 export type ChatAnswerRequest = z.infer<typeof ChatAnswerRequestSchema>;
