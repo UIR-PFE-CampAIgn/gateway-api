@@ -72,7 +72,7 @@ export class CampaignService {
         // Find active chat for this lead **and the same business**
         const chat = await this.chatsRepo.findOne({
           lead_id: lead._id,
-          business_id: businessId, // ✅ Filter by business
+          // business_social_media_id: businessId, // ✅ To uncomment later - Filter by business
           status: 'open',
         });
 
