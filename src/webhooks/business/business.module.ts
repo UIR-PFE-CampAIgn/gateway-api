@@ -4,7 +4,8 @@ import { BusinessService } from './business.service';
 import { DatabaseModule } from '../../database/database.module';
 import { CampaignRepository } from '../../database/repositories/campaign.repository';
 import { MessageTemplateRepository } from 'src/database/repositories/message-template.repository';
-import { MlClientModule } from 'src/clients/ml/ml-client.module';
+import { MlClientModule } from '../../clients/ml/ml-client.module';
+
 @Module({
   imports: [DatabaseModule, MlClientModule],
   controllers: [BusinessController],
