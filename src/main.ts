@@ -15,6 +15,7 @@ async function bootstrap() {
       'http://localhost:3001',
       'http://localhost:3000',
       'https://uir-pfe-campaign.vercel.app',
+      '/\.vercel\.app$/',
     ],
     credentials: true,
   });
