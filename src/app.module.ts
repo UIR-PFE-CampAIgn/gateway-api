@@ -13,6 +13,7 @@ import { BusinessModule } from './webhooks/business/business.module';
 import { DashboardModule } from './webhooks/dashboard/dashboard.module';
 import { UsersModule } from './webhooks/user/user.module';
 import { ProductsModule } from './webhooks/products/products.module';
+import { MlClientModule } from './clients/ml/ml-client.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { ProductsModule } from './webhooks/products/products.module';
     BusinessModule,
     DashboardModule,
     UsersModule,
-    ProductsModule
+    ProductsModule,
+    MlClientModule,
   ],
   controllers: [AppController],
   providers: [AppService],
