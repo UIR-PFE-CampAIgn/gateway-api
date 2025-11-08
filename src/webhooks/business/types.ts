@@ -1,5 +1,5 @@
-import { Campaign } from "../campaigns/types";
-import { MessageTemplateResponse } from "../templates/types";
+import { Campaign } from '../campaigns/types';
+import { MessageTemplateResponse } from '../templates/types';
 export interface CreateBusinessDto {
   name: string;
   description?: string;
@@ -47,8 +47,8 @@ export interface BusinessResponse {
   user_id: string;
   campaigns?: number; // Campaign count
   Leads?: number;
-  recentCampaigns?: Campaign[]; 
-  welcomeTemplate?: MessageTemplateResponse | null; 
+  recentCampaigns?: Campaign[];
+  welcomeTemplate?: MessageTemplateResponse | null;
   created_at: Date;
   updated_at: Date;
 }

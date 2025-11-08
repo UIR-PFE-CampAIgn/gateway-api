@@ -10,12 +10,12 @@ import {
   UpdateBusinessDto,
   BusinessResponse,
 } from './types';
-import { generateBusinessVectorContent } from './business.templates';
 import { MessageTemplateResponse } from '../templates/types';
 import { Campaign } from '../campaigns/types';
 import { LeadsRepository } from '../../database/repositories/lead.repository';
 import { MessageTemplateRepository } from 'src/database/repositories/message-template.repository';
 import { MlClientService } from 'src/clients/ml/ml-client.service';
+import { VectorSyncService } from 'src/clients/ml/vector-sync.service';
 @Injectable()
 export class BusinessService {
   constructor(
@@ -24,6 +24,8 @@ export class BusinessService {
     private readonly LeadsRepository: LeadsRepository,
     private readonly MessageTemplateRepository: MessageTemplateRepository,
     private readonly mlClientService: MlClientService,
+    private readonly vectorSyncService: VectorSyncService,
+
   ) {}
 
   async create(
@@ -40,23 +42,11 @@ export class BusinessService {
       timezone: dto.timezone || 'UTC',
     });
 
-    // 2. Send business data to ML service (feed vector)
-    try {
-      await this.mlClientService.feedVector({
-        content: generateBusinessVectorContent(business),
-        business_id: business._id,
-        metadata: {
-          business_id: business._id,
-        },
-      });
-    
-      console.log(`✅ Business ${business._id} fed to ML service`);
-    } catch (error) {
-      console.warn(
-        `⚠️ Failed to feed business ${business._id} to ML service:`,
-        error,
-      );
-    }
+    // 2. Sync to ML service
+    await this.vectorSyncService.syncBusiness(business).catch((error) => {
+      console.warn(`⚠️ Vector sync failed for business ${business._id}`, error);
+      // Business is still created, sync failure is non-critical
+    });
 
     // 3. Return formatted response
     return this.formatBusiness(business, 0);
@@ -161,6 +151,7 @@ export class BusinessService {
       name: business.name,
       phone: business.phone,
       address: business.address,
+      website: business.website,
       industry: business.industry,
       email: business.email,
       is_active: business.is_active,
@@ -196,25 +187,10 @@ export class BusinessService {
     // 1️⃣ Update business in DB
     const updated = await this.businessRepository.updateById(businessId, dto);
 
-    // 2️⃣ Feed updated data to ML service
-    try {
-      await this.mlClientService.feedVector({
-        content: generateBusinessVectorContent(updated),
-        business_id: updated._id,
-        metadata: {
-          business_id: updated._id,
-        },
-      });
-
-      console.log(
-        `✅ Business ${updated._id} re-fed to ML service after update`,
-      );
-    } catch (error) {
-      console.warn(
-        `⚠️ Failed to re-feed business ${updated._id} to ML service:`,
-        error?.response?.data || error.message || error,
-      );
-    }
+    // 2️⃣ Sync to ML service
+    await this.vectorSyncService.syncBusiness(updated).catch((error) => {
+      console.warn(`⚠️ Vector sync failed for business ${updated._id}`, error);
+    });
 
     // 3️⃣ Return formatted response
     const campaignCount = await this.campaignRepository.count({
@@ -226,23 +202,23 @@ export class BusinessService {
 
   async delete(businessId: string, userId: string): Promise<void> {
     const business = await this.businessRepository.findById(businessId);
-  
+
     if (!business) {
       throw new NotFoundException('Business not found');
     }
-  
+
     // 🔒 Ensure ownership
     if ((business as any).user_id !== userId) {
       throw new ForbiddenException('You do not have access to this business');
     }
-  
+
     let session = null;
-  
+
     try {
       // 🧩 Try to start a transaction (works on Atlas)
       session = await this.businessRepository.startSession();
       session.startTransaction();
-  
+
       // 🔹 1. Delete related data
       await this.campaignRepository.deleteMany(
         { business_id: businessId },
@@ -256,13 +232,13 @@ export class BusinessService {
         { business_id: businessId },
         { session },
       );
-  
+
       // 🔹 2. Delete the business itself
       await this.businessRepository.deleteOne({ _id: businessId }, { session });
-  
+
       // ✅ Commit transaction (Atlas)
       await session.commitTransaction();
-  
+
       // 🔹 3. Delete vector from ML service
       try {
         await this.mlClientService.deleteVector(businessId);
@@ -277,7 +253,7 @@ export class BusinessService {
       if (session) {
         await session.abortTransaction(); // rollback if failed
       }
-  
+
       // ⚠️ If transactions aren't supported (local Compass)
       if (
         error.message?.includes(
@@ -287,7 +263,7 @@ export class BusinessService {
         console.warn(
           '⚠️ Transactions not supported in this environment — using fallback deletes.',
         );
-  
+
         await Promise.all([
           this.campaignRepository.deleteMany({ business_id: businessId }),
           this.LeadsRepository.deleteMany({ business_id: businessId }),
@@ -296,11 +272,13 @@ export class BusinessService {
           }),
         ]);
         await this.businessRepository.deleteOne({ _id: businessId });
-  
+
         // Delete vector from ML service in fallback mode too
         try {
           await this.mlClientService.deleteVector(businessId);
-          console.log(`✅ Business ${businessId} vector deleted from ML service`);
+          console.log(
+            `✅ Business ${businessId} vector deleted from ML service`,
+          );
         } catch (mlError) {
           console.warn(
             `⚠️ Failed to delete business ${businessId} vector from ML service:`,
