@@ -288,7 +288,7 @@ export class WhatsappWebhookService {
       const { to, message } = payload;
       await this.twilioClient.messages.create({
         from: `whatsapp:${process.env.WHATSAPP_NUMBER}`, // @TODO should be replaced by Buisness's phone_number
-        to: `whatsapp:+212773823618`, // @TODO should be replaced by lead's phone_number
+        to: `whatsapp:212773823618`, // @TODO should be replaced by lead's phone_number
         body: message,
       });
 
