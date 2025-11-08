@@ -17,26 +17,9 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  async create(@Body() body: any) {
-    const business_id = body.business_id;
-    if (!business_id) {
-      throw new BadRequestException('business_id is required');
-    }
-
-    const dto: CreateProductDto = {
-      business_id,
-      name: body.name,
-      price: Number(body.price),
-      currency: body.currency,
-      description: body.description,
-      sku: body.sku,
-      stock: body.stock !== undefined ? Number(body.stock) : undefined,
-      category: body.category,
-    };
-
+  async create(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
   }
-
   @Get()
   async findAll(
     @Query('businessId') businessId: string,
