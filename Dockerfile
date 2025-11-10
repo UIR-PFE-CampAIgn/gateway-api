@@ -1,27 +1,36 @@
-# --- Base image for building
+# --- Builder image
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies (with devDeps for building)
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --include=dev --no-audit --no-fund
 
-# Copy source and build
-COPY . .
+# Copy only source code and config needed to build
+COPY src ./src
+COPY tsconfig*.json ./
+
+# Build the app
 RUN npm run build
 
-# --- Production image (smaller, no devDeps)
+# --- Production image
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy only necessary files
+# Create a non-root user
+RUN useradd --user-group --create-home --shell /bin/false appuser
+USER appuser
+
+# Copy only runtime dependencies
 COPY package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
+# Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-
+# Expose app port
 EXPOSE 3001
 
+# Start the application
 CMD ["node", "dist/main.js"]
