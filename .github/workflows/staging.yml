@@ -1,8 +1,8 @@
-name: "Staging (master): Gateway"
+name: "Staging (develop): Gateway"
 
 on:
   push:
-    branches: [master]  # <-- temporarily for testing
+    branches: [master, develop]  # <-- temporarily for testing
 
 env:
   REGISTRY: ghcr.io
