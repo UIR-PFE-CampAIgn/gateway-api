@@ -2,7 +2,7 @@ name: "Staging (master): Gateway"
 
 on:
   push:
-    branches: [feature/devops]
+    branches: [feature/devops]  # <-- temporarily for testing
 
 env:
   REGISTRY: ghcr.io
@@ -18,23 +18,23 @@ jobs:
   test_and_sonar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@7f0d3b9d8c99e73c1a97e4bf19fa27b7f243b8c5  # full SHA
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@d4e5a5a68c3e99b5f1c2b41fdd6a4b9b7f62e9c7  # full SHA
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - uses: actions/cache@1a2b3c4d5e6f7g8h9i0j  # full SHA
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
 
-      - name: Install
+      - name: Install dependencies
         run: npm ci
 
       - name: SonarCloud Scan
         if: env.SKIP_SONAR != 'true'
-        uses: SonarSource/sonarcloud-github-action@2b3c4d5e6f7g8h9i0j1k  # full SHA
+        uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
@@ -47,13 +47,15 @@ jobs:
   build_and_deploy:
     needs: test_and_sonar
     runs-on: ubuntu-latest
-    permissions: { contents: read, packages: write }
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - uses: actions/checkout@7f0d3b9d8c99e73c1a97e4bf19fa27b7f243b8c5  # full SHA
-      - uses: docker/setup-buildx-action@f6a7b8c9d0e1f2g3h4i5  # full SHA
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        uses: docker/login-action@4d5e6f7g8h9i0j1k2l3  # full SHA
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -67,7 +69,7 @@ jobs:
           echo "sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: Build & Push
-        uses: docker/build-push-action@6f7g8h9i0j1k2l3m4n5  # full SHA
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
@@ -78,7 +80,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Deploy Gateway (staging)
-        uses: appleboy/ssh-action@1a2b3c4d5e6f7g8h9i0j  # full SHA
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.STAGING_HOST }}
           username: ${{ secrets.STAGING_USER }}
