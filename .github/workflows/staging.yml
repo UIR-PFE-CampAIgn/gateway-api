@@ -2,7 +2,7 @@ name: "Staging (master): Gateway"
 
 on:
   push:
-    branches: [feature/devops]  # <-- temporarily for testing
+    branches: [master]  # <-- temporarily for testing
 
 env:
   REGISTRY: ghcr.io
