@@ -2,11 +2,11 @@
 FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
-# Install dependencies (with devDeps for building)
+# Install dependencies with devDeps for building
 COPY package*.json ./
 RUN npm ci --include=dev --no-audit --no-fund
 
-# Copy only source code and config needed to build
+# Copy only source code and TypeScript configs
 COPY src ./src
 COPY tsconfig*.json ./
 
@@ -18,18 +18,18 @@ FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Create a non-root user
+# Create non-root user for security
 RUN useradd --user-group --create-home --shell /bin/false appuser
 USER appuser
 
-# Copy only runtime dependencies
+# Copy runtime dependencies
 COPY package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Expose app port
+# Expose the app port
 EXPOSE 3001
 
 # Start the application
