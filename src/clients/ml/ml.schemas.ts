@@ -37,6 +37,47 @@ export const FeedVectorResponseSchema = z.object({
   id: z.string(),
   status: z.string(),
 });
+
+export const CampaignRequestSchema = z.object({
+  prompt: z.string(),
+  timezone: z.string().optional().default('UTC'),
+});
+
+export const CampaignResponseSchema = z.object({
+  strategy: z.object({
+    target_segments: z.array(z.string()),
+    reasoning: z.string(),
+    campaign_type: z.string(),
+    key_message: z.string(),
+    expected_response_rates: z.record(z.string(), z.string()),
+  }),
+  templates: z.array(
+    z.object({
+      message: z.string(),
+      target_segment: z.string(),
+      approach: z.string(),
+      personalization_tips: z.string(),
+    })
+  ),
+  schedule: z.array(
+    z.object({
+      segment: z.string(),
+      send_datetime: z.string(),
+      day_of_week: z.string(),
+      reasoning: z.string(),
+      priority: z.string(),
+    })
+  ),
+  insights: z.object({
+    success_factors: z.array(z.string()),
+    warnings: z.array(z.string()),
+    optimization_tips: z.array(z.string()),
+  }),
+});
+
+export type CampaignRequest = z.infer<typeof CampaignRequestSchema>;
+export type CampaignResponse = z.infer<typeof CampaignResponseSchema>;
+
 export type FeedVectorRequest = z.infer<typeof FeedVectorRequestSchema>;
 export type FeedVectorResponse = z.infer<typeof FeedVectorResponseSchema>;
 export type ChatAnswerRequest = z.infer<typeof ChatAnswerRequestSchema>;

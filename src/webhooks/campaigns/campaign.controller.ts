@@ -105,4 +105,22 @@ export class CampaignController {
     }
     return await this.campaignService.cancel(id, businessId);
   }
+
+  @Post('generate-campaign')
+  async generateCampaignPreview(
+    @Body('prompt') prompt: string,
+    @Body('businessId') businessId: string,
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
+    if (!prompt || prompt.trim().length === 0) {
+      throw new BadRequestException('prompt is required');
+    }
+
+    return await this.campaignService.generateCampaignPreview(
+      businessId,
+      prompt,
+    );
+  }
 }

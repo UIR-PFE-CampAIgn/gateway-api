@@ -5,7 +5,7 @@ import { MessageTemplateRepository } from '../../database/repositories/message-t
 import { CampaignSchedulerService } from './campaign-scheduler.service';
 import { LeadsRepository } from 'src/database/repositories/lead.repository';
 import { ChatsRepository } from 'src/database/repositories/chat.repository';
-
+import { MlClientService } from 'src/clients/ml/ml-client.service';
 interface CreateCampaignDto {
   template_id: string;
   name: string;
@@ -26,6 +26,7 @@ export class CampaignService {
     private readonly schedulerService: CampaignSchedulerService,
     private readonly leadsRepo: LeadsRepository, // Add this
     private readonly chatsRepo: ChatsRepository,
+    private readonly MlClientService: MlClientService,
   ) {}
 
   async create(businessId: string, dto: CreateCampaignDto) {
@@ -182,5 +183,29 @@ export class CampaignService {
     await this.campaignRepository.updateById(id, { status: 'failed' });
 
     return { message: 'Campaign cancelled' };
+  }
+  async generateCampaignPreview(businessId: string, prompt: string) {
+    try {
+      this.logger.log(
+        `Generating ML campaign preview for business ${businessId}`,
+      );
+
+      // Call ML client
+      const mlResponse = await this.MlClientService.generateCampaign({
+        prompt,
+        timezone: 'UTC',
+      });
+
+      // Just return the ML response directly
+      return {
+        campaign: mlResponse,
+        note: 'This is a preview. Nothing is saved yet.',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate campaign preview: ${error.message}`,
+      );
+      throw error;
+    }
   }
 }
