@@ -5,6 +5,7 @@ import { MessageTemplateRepository } from '../../database/repositories/message-t
 import { CampaignSchedulerService } from './campaign-scheduler.service';
 import { LeadsRepository } from 'src/database/repositories/lead.repository';
 import { ChatsRepository } from 'src/database/repositories/chat.repository';
+import { Lead } from 'src/database/schemas/lead.schema';
 
 interface CreateCampaignDto {
   template_id: string;
@@ -65,8 +66,7 @@ export class CampaignService {
     const skippedLeads = [];
 
     for (const lead of targetLeads) {
-      const leadData =
-        dto.lead_data?.find((ld) => ld.lead_id === lead._id) || {};
+      const leadData = lead;
 
       try {
         // Find active chat for this lead **and the same business**
@@ -145,13 +145,39 @@ export class CampaignService {
     };
   }
 
-  private renderTemplate(template: string, data: Record<string, any>): string {
+  // template will contain these 2 keys {{name}} {{phone}}
+  // name should be retrieved from "data.display_name"
+  // phone should be retrieved from "data.provider_user_id"
+  // missing fields should not be displayed at all, but add empty value for placeholder
+  // Also include missing values per lead.schema.ts: provider, business_id, score, created_at, _id
+  private renderTemplate(template: string, data: Lead): string {
+    // Prepare a mapping of replacements for each field in lead.schema.ts
+    const replacements: Record<string, any> = {
+      name: data.display_name ?? '',
+      phone: data.provider_user_id ?? '',
+      provider: data.provider ?? '',
+      provider_user_id: data.provider_user_id ?? '',
+      business_id: data.business_id ?? '',
+      score: data.score ?? '',
+      created_at: data.created_at?.toISOString?.() ?? '',
+      _id: data._id ?? '',
+    };
+
+    // Replace all supported {{field}} placeholders, even if missing
     let rendered = template;
-    for (const [key, value] of Object.entries(data)) {
-      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-      rendered = rendered.replace(regex, value || '');
+    for (const key of Object.keys(replacements)) {
+      // Replace all instances of {{key}} with value (empty string if missing)
+      rendered = rendered.replace(
+        new RegExp(`\\{\\{${key}\\}\\}`, 'g'),
+        replacements[key],
+      );
     }
-    return rendered;
+
+    // Remove any remaining unmatched {{...}} placeholders
+    rendered = rendered.replace(/\{\{[^}]+\}\}/g, '');
+
+    // Clean up accidental double spaces and trim
+    return rendered.replace(/(\s){2,}/g, ' ').trim();
   }
 
   async findAll(businessId: string) {

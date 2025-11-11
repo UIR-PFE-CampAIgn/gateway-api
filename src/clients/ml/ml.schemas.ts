@@ -13,6 +13,7 @@ export const ChatAnswerRequestSchema = z.object({
     .catch({ phone: '' }),
   to: z.string().catch(''),
   context: z.record(z.string(), z.any()).optional(),
+  business_id: z.string(),
 });
 
 export const ChatAnswerResponseSchema = z.object({
@@ -34,7 +35,6 @@ export const FeedVectorRequestSchema = z.object({
 });
 
 export const FeedVectorResponseSchema = z.object({
-  id: z.string(),
   status: z.string(),
 });
 export type FeedVectorRequest = z.infer<typeof FeedVectorRequestSchema>;

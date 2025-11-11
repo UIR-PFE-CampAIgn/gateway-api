@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NormalizedInboundMessage } from './types';
+import { ChatData, NormalizedInboundMessage } from './types';
 import { MessagesRepository } from '../../database/repositories/message.repository';
 import { ChatsRepository } from '../../database/repositories/chat.repository';
 import { TwilioSenderService } from './twilio.sender';
 import { ConfigService } from '@nestjs/config';
 import { MlClientService } from '../../clients/ml/ml-client.service';
+import { ChatAnswerResponse } from 'src/clients/ml/ml.schemas';
 
 @Injectable()
 export class AiResponderService {
@@ -28,10 +29,18 @@ export class AiResponderService {
     n: NormalizedInboundMessage,
     chatId: string,
     fromNumber: string,
+    businessID: string,
+    chatData: ChatData,
   ): void {
     // Run after response is sent to Twilio webhook (non-blocking)
     setImmediate(() => {
-      this.generateAndSendReply(n, chatId, fromNumber).catch((e) =>
+      this.generateAndSendReply(
+        n,
+        chatId,
+        fromNumber,
+        businessID,
+        chatData,
+      ).catch((e) =>
         this.logger.error(`Auto-reply failed: ${(e as Error).message}`),
       );
     });
@@ -41,6 +50,8 @@ export class AiResponderService {
     n: NormalizedInboundMessage,
     chatId: string,
     fromNumber: string,
+    businessID: string,
+    chatData?: ChatData,
   ): Promise<void> {
     if (this.isMLServiceMocked) {
       this.logger.log('ML service mocked; skipping auto-reply');
@@ -51,16 +62,35 @@ export class AiResponderService {
       if (!this.mlClient.isEnabled()) {
         throw new Error('ML client disabled');
       }
-      const resp = await this.mlClient.answerChat({
-        message: n.body || '',
-        provider: n.provider,
-        channel: n.channel,
-        from: n.from,
-        to: n.to,
-        context: { chat_id: chatId },
-      });
-      if (!resp.answer) {
-        throw new Error('Empty ML answer');
+
+      let resp: ChatAnswerResponse;
+      try {
+        console.log('ml-service ai body', {
+          message: n.body || '',
+          provider: n.provider,
+          channel: n.channel,
+          from: n.from,
+          to: n.to,
+          context: { chat_id: chatId },
+          business_id: businessID,
+          ...chatData,
+        });
+        resp = await this.mlClient.answerChat({
+          message: n.body || '',
+          provider: n.provider,
+          channel: n.channel,
+          from: n.from,
+          to: n.to,
+          context: { chat_id: chatId },
+          business_id: businessID,
+          ...chatData,
+        });
+        if (!resp.answer) {
+          throw new Error('Empty ML answer');
+        }
+      } catch (error) {
+        console.log('ml-service - answerChat error', error);
+        throw new Error('Ai Failed to answer');
       }
 
       // Persist outbound AI message

@@ -29,3 +29,12 @@ export interface NormalizedInboundMessage {
   receivedAt: string; // ISO timestamp
   raw: Record<string, any>;
 }
+
+export interface ChatData {
+  messages_in_session?: number;
+  conversation_duration_minutes?: number;
+  user_response_time_avg_seconds?: number;
+  user_initiated_conversation?: boolean;
+  is_returning_customer?: boolean;
+  time_of_day?: 'business_hours' | 'off_hours';
+}
