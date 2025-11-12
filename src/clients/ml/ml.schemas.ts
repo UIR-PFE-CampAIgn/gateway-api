@@ -55,6 +55,7 @@ export const CampaignResponseSchema = z.object({
     z.object({
       message: z.string(),
       target_segment: z.string(),
+      template_type: z.string(),
       approach: z.string(),
       personalization_tips: z.string(),
     })
@@ -63,7 +64,6 @@ export const CampaignResponseSchema = z.object({
     z.object({
       segment: z.string(),
       send_datetime: z.string(),
-      day_of_week: z.string(),
       reasoning: z.string(),
       priority: z.string(),
     })

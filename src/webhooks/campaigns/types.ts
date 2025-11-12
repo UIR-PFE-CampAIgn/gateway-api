@@ -37,3 +37,22 @@ export interface Campaign {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface CreateGeneratedCampaignDto {
+  // Campaign
+  name: string; 
+
+  // Message template
+  message_content: string;
+  template_type: string;   
+
+  // Schedule
+  schedule_type: 'immediate' | 'scheduled' | 'recurring'; 
+  scheduled_at?: Date;    
+  cron_expression?: string; 
+  // Targeting
+  target_leads: ('hot' | 'warm' | 'cold')[]; 
+
+  // Optional lead data
+  lead_data?: Record<string, any>[];
+}

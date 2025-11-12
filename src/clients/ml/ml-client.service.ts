@@ -100,7 +100,6 @@ export class MlClientService extends HttpClientService {
     if (!parsed.success) {
       throw new Error('Invalid campaign response schema');
     }
-  
     return parsed.data;
   }
   

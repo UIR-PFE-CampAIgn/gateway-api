@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { CampaignService } from './campaign.service';
 import { CampaignSchedulerService } from './campaign-scheduler.service';
-import { CreateCampaignDto } from './types';
+import { CreateCampaignDto, CreateGeneratedCampaignDto } from './types';
 
 @Controller('campaigns')
 export class CampaignController {
@@ -122,5 +122,12 @@ export class CampaignController {
       businessId,
       prompt,
     );
+  }
+  @Post(':businessId/generated')
+  async createFromGenerated(
+    @Param('businessId') businessId: string,
+    @Body() dto: CreateGeneratedCampaignDto,
+  ) {
+    return this.campaignService.createFromGeneratedTemplate(businessId, dto);
   }
 }
