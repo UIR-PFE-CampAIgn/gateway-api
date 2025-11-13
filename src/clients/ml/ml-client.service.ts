@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpClientService } from '../../common/http/http-client.service';
 import {
+  CampaignRequest,
+  CampaignResponse,
+  CampaignResponseSchema,
   ChatAnswerRequest,
   ChatAnswerResponse,
   ChatAnswerResponseSchema,
@@ -84,4 +87,18 @@ export class MlClientService extends HttpClientService {
 
     return res.data;
   }
+  async generateCampaign(req: CampaignRequest): Promise<CampaignResponse> {
+    if (!this.enabled) {
+      throw new Error('ML client disabled: baseURL not configured');
+    }
+  
+    const res = await this['axios'].post('/v1/generate_campaign', req);
+  
+    const parsed = CampaignResponseSchema.safeParse(res.data);
+    if (!parsed.success) {
+      throw new Error('Invalid campaign response schema');
+    }
+    return parsed.data;
+  }
+  
 }

@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { CampaignService } from './campaign.service';
 import { CampaignSchedulerService } from './campaign-scheduler.service';
-import { CreateCampaignDto } from './types';
+import { CreateCampaignDto, CreateGeneratedCampaignDto } from './types';
 
 @Controller('campaigns')
 export class CampaignController {
@@ -104,5 +104,30 @@ export class CampaignController {
       throw new BadRequestException('businessId is required');
     }
     return await this.campaignService.cancel(id, businessId);
+  }
+
+  @Post('generate-campaign')
+  async generateCampaignPreview(
+    @Body('prompt') prompt: string,
+    @Body('businessId') businessId: string,
+  ) {
+    if (!businessId) {
+      throw new BadRequestException('businessId is required');
+    }
+    if (!prompt || prompt.trim().length === 0) {
+      throw new BadRequestException('prompt is required');
+    }
+
+    return await this.campaignService.generateCampaignPreview(
+      businessId,
+      prompt,
+    );
+  }
+  @Post(':businessId/generated')
+  async createFromGenerated(
+    @Param('businessId') businessId: string,
+    @Body() dto: CreateGeneratedCampaignDto,
+  ) {
+    return this.campaignService.createFromGeneratedTemplate(businessId, dto);
   }
 }

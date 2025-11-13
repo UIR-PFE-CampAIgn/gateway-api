@@ -5,6 +5,8 @@ import { MessageTemplateRepository } from '../../database/repositories/message-t
 import { CampaignSchedulerService } from './campaign-scheduler.service';
 import { LeadsRepository } from 'src/database/repositories/lead.repository';
 import { ChatsRepository } from 'src/database/repositories/chat.repository';
+import { MlClientService } from 'src/clients/ml/ml-client.service';
+import { CreateGeneratedCampaignDto } from 'src/webhooks/campaigns/types';
 import { Lead } from 'src/database/schemas/lead.schema';
 
 interface CreateCampaignDto {
@@ -27,6 +29,7 @@ export class CampaignService {
     private readonly schedulerService: CampaignSchedulerService,
     private readonly leadsRepo: LeadsRepository, // Add this
     private readonly chatsRepo: ChatsRepository,
+    private readonly MlClientService: MlClientService,
   ) {}
 
   async create(businessId: string, dto: CreateCampaignDto) {
@@ -209,4 +212,59 @@ export class CampaignService {
 
     return { message: 'Campaign cancelled' };
   }
+  async generateCampaignPreview(businessId: string, prompt: string) {
+    try {
+      this.logger.log(
+        `Generating ML campaign preview for business ${businessId}`,
+      );
+
+      // Call ML client
+      const mlResponse = await this.MlClientService.generateCampaign({
+        prompt,
+        timezone: 'UTC',
+      });
+
+      // Just return the ML response directly
+      return {
+        campaign: mlResponse,
+        note: 'This is a preview. Nothing is saved yet.',
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate campaign preview: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  async createFromGeneratedTemplate(
+    businessId: string,
+    dto: CreateGeneratedCampaignDto,
+  ) {
+    const campaignName = dto.name; // chosen by user
+  
+    // Generate template name internally
+    const templateName = `${campaignName}-template-${Date.now()}`;
+  
+    // Create message template
+    const newTemplate = await this.templateRepository.create({
+      business_id: businessId,
+      name: templateName,
+      content: dto.message_content,
+      category: dto.template_type,
+      language: 'EN',
+    });
+  
+    // Create campaign using this template
+    return this.create(businessId, {
+      template_id: newTemplate._id,
+      name: campaignName,
+      schedule_type: dto.schedule_type,
+      scheduled_at: dto.scheduled_at,
+      cron_expression: dto.cron_expression,
+      target_leads: dto.target_leads,
+      lead_data: dto.lead_data ?? [],
+    });
+  }
+  
 }
