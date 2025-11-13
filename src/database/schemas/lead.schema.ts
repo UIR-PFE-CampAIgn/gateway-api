@@ -17,7 +17,7 @@ export const LeadSchema = new Schema<Lead>(
   {
     _id: { type: String, default: () => randomUUID() },
     provider: { type: String, required: true },
-    provider_user_id: { type: String, required: true },
+    provider_user_id: { type: String, required: true }, // WA: phoneNumber
     display_name: { type: String },
     business_id: { type: String, required: true },
     score: {

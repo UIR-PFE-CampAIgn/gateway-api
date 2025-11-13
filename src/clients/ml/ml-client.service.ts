@@ -19,10 +19,7 @@ export class MlClientService extends HttpClientService {
 
   constructor(config: ConfigService) {
     super({
-      baseURL: (
-        config.get<string>('ML_SERVICE_URL') ||
-        config.get<string>('CAMPAIGN_ML_SERVICE_URL')
-      )?.replace(/\/$/, ''),
+      baseURL: config.get<string>('ML_SERVICE_URL'),
       timeoutMs: Number(config.get<string>('ML_HTTP_TIMEOUT_MS') ?? 8000),
       headers: { 'Content-Type': 'application/json' },
     });
@@ -44,7 +41,7 @@ export class MlClientService extends HttpClientService {
       '/api/v1/chat/answer',
       {
         query: req.message,
-        business_id: req.from,
+        business_id: req.business_id,
         context_limit: 5,
         temperature: 0.7,
         min_confidence: 0.4,
@@ -68,8 +65,9 @@ export class MlClientService extends HttpClientService {
     if (!this.enabled)
       throw new Error('ML client disabled: baseURL not configured');
 
-    const res = await this['axios'].post('/v1/feed_vector', req);
+    const res = await this['axios'].post('/api/v1/feed_vector', req);
 
+    console.log('res.data', res.data);
     const parsed = FeedVectorResponseSchema.safeParse(res.data);
     if (!parsed.success) throw new Error('Invalid feed_vector response schema');
 
