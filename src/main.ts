@@ -1,3 +1,4 @@
+import 'tsconfig-paths/register'; // ensures absolute imports based on tsconfig
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
