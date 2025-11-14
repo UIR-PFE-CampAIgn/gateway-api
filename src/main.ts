@@ -1,8 +1,15 @@
-import 'tsconfig-paths/register'; // ensures absolute imports based on tsconfig
+import { register } from 'tsconfig-paths';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
+
+register({
+  baseUrl: __dirname,
+  paths: {
+    'src/*': ['*'],
+  },
+});
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
