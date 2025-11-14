@@ -38,7 +38,7 @@ export class MlClientService extends HttpClientService {
       throw new Error('ML client disabled: baseURL not configured');
     }
     const res = await this['axios'].post(
-      '/api/v1/chat/answer',
+      '/v1/chat/answer',
       {
         query: req.message,
         business_id: req.business_id,
@@ -65,7 +65,7 @@ export class MlClientService extends HttpClientService {
     if (!this.enabled)
       throw new Error('ML client disabled: baseURL not configured');
 
-    const res = await this['axios'].post('/api/v1/feed_vector', req);
+    const res = await this['axios'].post('/v1/feed_vector', req);
 
     console.log('res.data', res.data);
     const parsed = FeedVectorResponseSchema.safeParse(res.data);
@@ -91,14 +91,13 @@ export class MlClientService extends HttpClientService {
     if (!this.enabled) {
       throw new Error('ML client disabled: baseURL not configured');
     }
-  
+
     const res = await this['axios'].post('/v1/generate_campaign', req);
-  
+
     const parsed = CampaignResponseSchema.safeParse(res.data);
     if (!parsed.success) {
       throw new Error('Invalid campaign response schema');
     }
     return parsed.data;
   }
-  
 }
